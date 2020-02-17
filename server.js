@@ -14,10 +14,26 @@ var simulation_age = 0;
 
 var species = [];
 var client_ids = [];
+var host_list = [];
 
 var sim_width = 1;
 var sim_height = 1;
 var sim_speed = 1.0;
+var started = true;
+
+var spawn_positions = [[0.2, 0.2],
+                       [0.8, 0.8],
+                       [0.8, 0.2],
+                       [0.2, 0.8],
+                       [0.5, 0.5],
+                       [0.5, 0.2],
+                       [0.5, 0.8],
+                       [0.8, 0.5],
+                       [0.2, 0.5],
+                       [0.65, 0.35],
+                       [0.35, 0.65],
+                       [0.65, 0.65],
+                       [0.35, 0.35]].reverse();
 
 
 class SugarContainer {
@@ -316,7 +332,14 @@ io.on('connection', function(socket) {
 		try {
 		    var new_species = new Species(id, mutation_rate, metabolism, flagella, toxicity, robustness);
 		    species.push(new_species);
-		    new_species.populate(10, [0, 0]);
+		    new_species.populate(30, spawn_positions.pop());
+		} catch (e) {
+			console.log(e);
+		}
+   	});
+   	socket.on('become_host', function() {
+		try {
+			host_list.push(socket.id);
 		} catch (e) {
 			console.log(e);
 		}
@@ -326,22 +349,34 @@ io.on('connection', function(socket) {
 function time_string() {
     var remaining = Math.max(300 - simulation_age, 0);
     var seconds = Math.floor(remaining % 60);
-    if (seconds.length == 1) {
+    if (seconds.toString().length == 1) {
         seconds = "0" + seconds;
     }
     var minutes = Math.floor(remaining/60);
     return ("Time," + minutes + ":" + seconds + ";");
 }
 
-var mip = new Species("Mip", 0.5, 0.6, 0.2, 0.6, 0.6);
-var newp = new Species("Newp", 0.5, 1.0, 1.0, 0.4, 0.2);
-var gomp = new Species("Literally E. coli", 0.5, 0.2, 0.8, 1.0, 1.0);
-species.push(mip);
-species.push(newp);
-species.push(gomp);
-mip.populate(30, [0.3, 0.3]);
-newp.populate(30, [0.7, 0.7]);
-gomp.populate(2, [0.7, 0.3]);
+var a = new Species("Mip", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var b = new Species("Newp", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var c = new Species("Literally E. coli", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var d = new Species("Nathius sampolium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var e = new Species("Paul nadanius", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var f = new Species("Jeremus cryanus", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var g = new Species("R. martellium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+species.push(a);
+species.push(b);
+species.push(c);
+species.push(d);
+species.push(e);
+species.push(f);
+species.push(g);
+a.populate(30, spawn_positions.pop());
+b.populate(30, spawn_positions.pop());
+c.populate(30, spawn_positions.pop());
+d.populate(30, spawn_positions.pop());
+e.populate(30, spawn_positions.pop());
+f.populate(30, spawn_positions.pop());
+g.populate(30, spawn_positions.pop());
 
 function packet() {
     var p = "";
@@ -353,11 +388,17 @@ function packet() {
     return p;
 }
 
+function start_simulation() {
+    var started = true;
+}
+
 setInterval(function() {
 	var date = new Date();
 	var newTime = date.getTime();
 	var dt = newTime - time;
-	simulation_age += dt/1000;
+	if (started) {
+		simulation_age += dt/1000;
+	}
 
     // After five minutes, all cells without resistance die
 	if (simulation_age > 300) {
@@ -366,16 +407,20 @@ setInterval(function() {
 	    }
 	}
 
-	for (var i in client_ids) {
-	    io.to(client_ids[i]).emit("update", packet());
+
+	for (var i in host_list) {
+	    io.to(host_list[i]).emit("update", packet());
 	}
-    for (var i in species) {
-        for (var j in species[i].agents) {
-            species[i].agents[j].update(dt/1000);
+
+	if (started) {
+        for (var i in species) {
+            for (var j in species[i].agents) {
+                species[i].agents[j].update(dt/1000);
+            }
+            species[i].check_collisions();
+            species[i].bring_out_your_dead();
         }
-        species[i].check_collisions();
-        species[i].bring_out_your_dead();
+        sugar.bring_out_your_dead();
     }
-    sugar.bring_out_your_dead();
     time = newTime;
 }, 1000/ticks);

@@ -1,17 +1,30 @@
 var socket = io();
 
 var ticks = 60;
-var host = true;
+var host = false;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
 var to_render = [];
-var colors = [[220, 30, 40], [30, 120, 240], [240, 130, 30], [160, 50, 200]].reverse();
+var colors = [[220, 30, 40],
+              [30, 120, 240],
+              [50, 200, 90],
+              [240, 130, 30],
+              [160, 50, 200],
+              [50, 160, 200],
+              [125, 125, 125]].reverse();
 var id_to_color = {};
 var id_to_count = {};
 var id_to_stats = {};
 var species_cards = [];
 var time_remaining = "5:00"
+var maxStats = 5;
+var statPoints = 10;
+
+var metabolism = 4;
+var toxicity = 1;
+var robustness = 1;
+var flagella = 1;
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -38,7 +51,7 @@ class TimeBoard {
     render(canvas, context) {
         var minutes = time_remaining.split(":")[0];
         var x = 0.74 * canvas.width;
-        var y = 0.11 * canvas.height;
+        var y = 0.10 * canvas.height;
         var font_size = canvas.height/12;
         context.font = (font_size).toString() + 'px Arial Black';
         context.fillStyle = 'rgba(255, 255, 255, 1)';
@@ -47,6 +60,11 @@ class TimeBoard {
         }
         context.fillText(time_remaining, x, y);
     }
+}
+
+function become_host() {
+	host = true;
+	socket.emit('become_host');
 }
 
 class SpeciesCard {
@@ -60,10 +78,10 @@ class SpeciesCard {
 
     render(canvas, context) {
         var border_x = 0.03 * canvas.width;
-        var border_y = 0.03 * canvas.height;
+        var border_y = 0.015 * canvas.height;
         var x = x_to_draw(1.0) + border_x;
-        var y = border_y * 5;
-        var height = 1/12 * canvas.height;
+        var y = border_y * 9;
+        var height = 0.07 * canvas.height;
         y += (border_y + height) * species_cards.indexOf(this);
         var width = (canvas.width - x_to_draw(1.0)) - 2*border_x;
 
@@ -101,9 +119,9 @@ class SpeciesCard {
 		var toxicity = ["T", t, 1, 0];
 		var robustness = ["R", r, 1, 1];
 		var x_origin = x + canvas.width * 0.29;
-		var y_origin = y + canvas.height/30;
+		var y_origin = y + canvas.height * 0.03;
 		var x_spacing = canvas.width*0.04;
-		var y_spacing = canvas.height/30;
+		var y_spacing = canvas.height * 0.025;
 		var square_x_spacing = canvas.width/200;
 		var square_width = square_x_spacing*0.8;
 		var square_height = canvas.height/100;
@@ -118,7 +136,7 @@ class SpeciesCard {
 		    var my_y = y_origin + my_y_spacing;
             context.fillText(text, my_x, my_y);
             my_x += square_x_spacing * 2.2;
-            my_y -= y_spacing/3;
+            my_y -= y_spacing/2;
             for (var i = 0; i < value; i++) {
                 context.fillRect(my_x, my_y, square_width, square_height);
                 my_x += square_x_spacing;
@@ -236,17 +254,57 @@ class Slider {
 	}
 }
 
+class PointDisplay {
+	constructor(id, x, y, segmentWidth, segmentHeight, segmentGap, stat) {
+		this.id = id;
+		this.displayX = x;
+		this.displayY = y;
+		this.x = x - 0.85*segmentWidth;
+		this.y = y;
+		this.width = segmentWidth*0.6;
+		this.height = segmentHeight;
+		this.segmentWidth = segmentWidth;
+		this.segmentHeight = segmentHeight;
+		this.segmentGap = segmentGap;
+		this.stat = stat;
+		this.type = 'pointDisplay';
+	}
+
+	render(canvas, context) {
+		context.fillStyle = 'rgba(230, 230, 230, 1)';
+		context.strokeStyle = 'rgba(5, 5, 5, 1)';
+		context.lineWidth = 2;
+		context.beginPath();
+		context.rect(canvas.width*this.x, canvas.height*this.y, canvas.width*this.width, canvas.height*(this.height/2 - 0.001));
+		context.fill();
+		context.stroke();
+		context.closePath();
+
+		for (var i=0; i<window[this.stat]; i++) {
+			context.beginPath();
+			context.rect(canvas.width*(this.displayX + i*(this.segmentGap + this.segmentWidth)), canvas.height*this.displayY, canvas.width*this.segmentWidth, canvas.height*this.segmentHeight);
+			context.fill();
+			context.stroke();
+			context.closePath();
+		}
+	}
+
+	onClick() {
+		console.log('wow');
+	}
+}
+
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
-buttons.push(new Slider('Robustness', 0.45, 0.45, 0.1, 0.004, 0.003));
+buttons.push(new PointDisplay('Metabolism', 0.45, 0.45, 0.015, 0.04, 0.004, 'metabolism'));
+
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-	context.fillStyle = 'rgba(40, 40, 40, 1)';
-	context.fillRect(0, 0, canvas.width, canvas.height);
-
     if (host) {
+        context.fillStyle = 'rgba(40, 40, 40, 1)';
+	    context.fillRect(0, 0, canvas.width, canvas.height);
         species_cards.sort(function(a, b) {
            return (id_to_count[a.id] < id_to_count[b.id]);
         });
@@ -254,6 +312,8 @@ function render(canvas, context) {
 	        to_render[i].render(canvas, context);
 	    }
     } else {
+    	context.fillStyle = 'rgba(80, 80, 80, 1)';
+	    context.fillRect(0, 0, canvas.width, canvas.height);
     	for (var i in buttons) {
 		    buttons[i].render(canvas, context);
         }
@@ -294,7 +354,7 @@ document.addEventListener('mouseup', function(event) {
 });
 
 document.addEventListener('mousedown', function(event) {
-	console.log(pxRatio);
+    become_host();
 	for (var i in buttons) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
@@ -325,5 +385,4 @@ window.addEventListener('resize', function(event) {
 	} else {
 		pxRatio = newPxRatio;
 	}
-
 });
