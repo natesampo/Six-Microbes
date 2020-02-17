@@ -309,8 +309,10 @@ class PointDisplay {
 	}
 
 	onClick(x, y) {
-		if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*this.y && y <= ) {
-
+		if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*this.y && y <= canvas.height*(this.y + this.height/2 - 0.0025)) {
+			window[this.stat] = Math.min(window[this.stat]+1, maxStats);
+		} else if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*(this.y + this.height/2 + 0.0025) && y <= canvas.height*(this.y + this.height/2 + 0.0025 + this.height/2 - 0.0025)) {
+			window[this.stat] = Math.max(window[this.stat]-1, 1);
 		}
 	}
 }

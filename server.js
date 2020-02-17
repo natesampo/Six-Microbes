@@ -15,7 +15,7 @@ var simulation_age = 0;
 
 var species = [];
 var client_ids = [];
-var host_list = [];
+var host = '';
 
 var sim_width = 1;
 var sim_height = 1;
@@ -342,7 +342,7 @@ io.on('connection', function(socket) {
    	});
    	socket.on('become_host', function() {
 		try {
-			host_list.push(socket.id);
+			host = socket.id;
 		} catch (e) {
 			console.log(e);
 		}
@@ -396,8 +396,8 @@ function start_simulation() {
 }
 
 setInterval(function() {
-	for (var i in host_list) {
-	    io.to(host_list[i]).emit("update", packet());
+	if (host != '') {
+	    io.to(host).emit("update", packet());
 	}
 }, 1000/packet_ticks);
 
