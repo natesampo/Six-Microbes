@@ -152,10 +152,8 @@ setInterval(function() {
 
 	for (var i in client_ids) {
 	    io.to(client_ids[i]).emit("update", packet());
-	    console.log(client_ids[i]);
 	}
     for (var i in species) {
-        console.log(species[i].to_string());
         for (var j in species[i].agents) {
             species[i].agents[j].update(0.1);
         }

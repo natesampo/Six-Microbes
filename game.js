@@ -1,7 +1,7 @@
 var socket = io();
 
 var ticks = 60;
-var host = true;
+var host = false;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
@@ -16,14 +16,13 @@ canvas.height = window.innerHeight*pxRatio;
 
 class AgentRender {
 	constructor(agent_string) {
-	    var split = agent_string.split(",");
+		var split = agent_string.split(",");
 
-	    this.id = split[0];
-	    this.survivability = parseFloat(split[1]);
-	    var color = [255, 255, 255];
-	    this.color = color.slice();
-	    this.pos = [parseFloat(split[2]), parseFloat(split[3])];
-	    console.log(agent_string);
+		this.id = split[0];
+		this.survivability = parseFloat(split[1]);
+		var color = [255, 255, 255];
+		this.color = color.slice();
+		this.pos = [parseFloat(split[2]), parseFloat(split[3])];
 	}
 
 	render(canvas, context) {
@@ -73,7 +72,8 @@ class Slider {
 }
 
 var buttons = [];
-buttons.push(new Slider('Mutation Rate', 0.45, 0.45, 0.1, 0.004, 0.003));
+buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
+buttons.push(new Slider('Robustness', 0.45, 0.45, 0.1, 0.004, 0.003));
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -94,7 +94,6 @@ function render(canvas, context) {
 }
 
 socket.on("update", function(packet) {
-    console.log("new packet");
     to_render = [];
     try {
         var pieces = packet.split(";");
