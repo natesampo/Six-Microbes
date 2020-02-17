@@ -1,7 +1,7 @@
 var socket = io();
 
 var ticks = 60;
-var host = true;
+var host = false;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
@@ -9,6 +9,13 @@ var to_render = [];
 var colors = [[220, 30, 40], [30, 120, 240], [240, 130, 30]].reverse();
 var id_to_color = {};
 var species_cards = [];
+var maxStats = 5;
+var statPoints = 10;
+
+var metabolism = 4;
+var toxicity = 1;
+var robustness = 1;
+var flagella = 1;
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -148,14 +155,55 @@ class Slider {
 	}
 }
 
+class PointDisplay {
+	constructor(id, x, y, segmentWidth, segmentHeight, segmentGap, stat) {
+		this.id = id;
+		this.displayX = x;
+		this.displayY = y;
+		this.x = x - 0.85*segmentWidth;
+		this.y = y;
+		this.width = segmentWidth*0.6;
+		this.height = segmentHeight;
+		this.segmentWidth = segmentWidth;
+		this.segmentHeight = segmentHeight;
+		this.segmentGap = segmentGap;
+		this.stat = stat;
+		this.type = 'pointDisplay';
+	}
+
+	render(canvas, context) {
+		context.fillStyle = 'rgba(230, 230, 230, 1)';
+		context.strokeStyle = 'rgba(5, 5, 5, 1)';
+		context.lineWidth = 2;
+		context.beginPath();
+		context.rect(canvas.width*this.x, canvas.height*this.y, canvas.width*this.width, canvas.height*(this.height/2 - 0.001));
+		context.fill();
+		context.stroke();
+		context.closePath();
+
+		for (var i=0; i<window[this.stat]; i++) {
+			context.beginPath();
+			context.rect(canvas.width*(this.displayX + i*(this.segmentGap + this.segmentWidth)), canvas.height*this.displayY, canvas.width*this.segmentWidth, canvas.height*this.segmentHeight);
+			context.fill();
+			context.stroke();
+			context.closePath();
+		}
+	}
+
+	onClick() {
+		console.log('wow');
+	}
+}
+
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
-buttons.push(new Slider('Robustness', 0.45, 0.45, 0.1, 0.004, 0.003));
+buttons.push(new PointDisplay('Metabolism', 0.45, 0.45, 0.015, 0.04, 0.004, 'metabolism'));
+
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-	context.fillStyle = 'rgba(40, 40, 40, 1)';
+	context.fillStyle = 'rgba(80, 80, 80, 1)';
 	context.fillRect(0, 0, canvas.width, canvas.height);
 
     if (host) {
@@ -200,7 +248,6 @@ document.addEventListener('mouseup', function(event) {
 });
 
 document.addEventListener('mousedown', function(event) {
-	console.log(pxRatio);
 	for (var i in buttons) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
