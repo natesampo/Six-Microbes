@@ -10,12 +10,62 @@ var port = 5000;
 var ticks = 40;
 var date = new Date();
 var time = date.getTime();
+var simulation_age = 0;
 
 var species = [];
 var client_ids = [];
 
 var sim_width = 1;
 var sim_height = 1;
+
+
+class SugarContainer {
+    constructor(number) {
+        this.sugar = [];
+        this.populate(number);
+    }
+
+    add(position, energy) {
+        this.sugar.push(new Sugar(position, energy));
+    }
+
+    populate(number) {
+        for (var i = 0; i < number; i++) {
+            var position = [Math.random(), Math.random()];
+            this.sugar.push(new Sugar(position, 1));
+        }
+    }
+
+    bring_out_your_dead() {
+        this.sugar = this.sugar.filter(function(item) {
+           return item.alive;
+        });
+    }
+
+    to_string() {
+        var result = "";
+        for (var i in this.sugar) {
+            result += this.sugar[i].to_string();
+        }
+        return result;
+    }
+}
+
+class Sugar {
+    constructor(position, energy) {
+        this.position = position;
+        this.energy = energy;
+        this.alive = true;
+        this.species = null;
+    }
+
+    to_string() {
+        return "Sugar," + this.position[0] + "," + this.position[1] + ";";
+    }
+}
+
+
+var sugar = new SugarContainer(200);
 
 
 class Species{
@@ -26,6 +76,7 @@ class Species{
         this.flagella = flagella;
         this.toxicity = toxicity;
         this.robustness = robustness;
+        this.fitness_heuristic = toxicity + robustness;
         this.agents = [];
     }
 
@@ -71,10 +122,9 @@ class Species{
 class Agent{
     constructor(species, position) {
         this.species = species;
-        this.rand_max = 10000;
-        this.fight_variation = 0.2;
+        this.rand_max = 100;
         this.collision_radius = 0.01;
-        this.speed = 0.02 * Math.random();
+        this.speed = 0.02 * Math.random();  // TODO make flagella stat affect speed and/or perception distance
         this.direction = this.random_direction();
         this.fitness = this.random_value(this.rand_max);
         this.position = position.slice();
@@ -83,7 +133,9 @@ class Agent{
 
         this.target = null;
         this.target_dist = null;
-        this.perception_distance = 0.03;
+        this.perception_distance = 0.04;
+
+        this.age = 0;
     }
 
     random_direction() {
@@ -95,7 +147,7 @@ class Agent{
     }
 
     reproduce() {
-        // Reproduce as many times as possible while keeping energy above one
+        // Reproduce as many times as possible while keeping energy above a threshold
         while (this.energy >= 2) {
             this.energy -= 1;
             this.species.populate(1, this.position.slice());
@@ -126,17 +178,20 @@ class Agent{
             this.target_dist = Math.pow(dx, 2) + Math.pow(dy, 2);
         }
         if (this.target_dist == null || this.target_dist > dist2) {
-            this.target = other;
-            this.target_dist = dist2;
+            if (simulation_age > 1) {
+                this.target = other;
+                this.target_dist = dist2;
+            }
         }
 
         return result;
     }
 
     eat_sugar() {
+        if (!this.alive) { return; }
         for (var i in sugar.sugar) {
             if (this.is_colliding(sugar.sugar[i])) {
-                this.energy += sugar.sugar[i].energy;
+                this.energy += sugar.sugar[i].energy * this.species.metabolism;
                 sugar.sugar[i].energy = 0;
                 sugar.sugar[i].alive = 0;
             }
@@ -144,30 +199,22 @@ class Agent{
     }
 
     fight(other) {
-        var my_attack = this.species.toxicity + Math.random() * this.fight_variation;
-        var other_defense = other.species.robustness + Math.random() * this.fight_variation;
+        var my_attack = this.species.toxicity * Math.random();
+        var other_defense = other.species.robustness * Math.random();
         if (my_attack >= other_defense) {
             other.die();
         }
 
-        var my_defense = this.species.robustness + Math.random() * this.fight_variation;
-        var other_attack = other.species.toxicity + Math.random() * this.fight_variation;
+        var my_defense = this.species.robustness * Math.random();
+        var other_attack = other.species.toxicity * Math.random();
         if (other_attack >= my_defense) {
             this.die();
         }
-
-        if (this.alive && !other.alive) {
-            this.energy += other.energy;
-            other.energy = 0;
-        } else if (other.alive && !this.alive) {
-            other.energy += this.energy;
-            this.energy = 0;
-        }
-
     }
 
     die() {
         this.alive = false;
+        sugar.add(this.position.slice(), this.energy/this.species.metabolism);
     }
 
     update_target() {
@@ -175,8 +222,15 @@ class Agent{
             var dx = this.target.position[0] - this.position[0];
             var dy = this.target.position[1] - this.position[1];
             var mag = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-            this.direction[0] = -dx/mag;
-            this.direction[1] = -dy/mag;
+            this.direction[0] = dx/mag;
+            this.direction[1] = dy/mag;
+
+            if (this.target.species != null) {
+                if (this.species.fitness_heuristic < this.target.species.fitness_heuristic) {
+                    this.direction[0] = -dx/mag;
+                    this.direction[1] = -dy/mag;
+                }
+            }
         }
     }
 
@@ -187,11 +241,12 @@ class Agent{
         this.eat_sugar();
         this.reproduce();
         this.update_target();
+        this.age += dt;
     }
 
     to_string() {
-        var x = Math.floor(this.position[0] * 100000) / 100000;
-        var y = Math.floor(this.position[1] * 100000) / 100000;
+        var x = Math.floor(this.position[0] * 10000) / 10000;
+        var y = Math.floor(this.position[1] * 10000) / 10000;
         var immune = 0;
         if (this.is_immune()) {
             immune = 1;
@@ -217,50 +272,6 @@ class Agent{
             this.position[1] = 1;
             this.direction[1] *= -1;
         }
-    }
-}
-
-class SugarContainer {
-    constructor(number) {
-        this.sugar = [];
-        this.populate(number);
-    }
-
-    add(position, energy) {
-        this.sugar.push(new Sugar(position, energy));
-    }
-
-    populate(number) {
-        for (var i = 0; i < number; i++) {
-            var position = [Math.random(), Math.random()];
-            this.sugar.push(new Sugar(position, 1));
-        }
-    }
-
-    bring_out_your_dead() {
-        this.sugar = this.sugar.filter(function(item) {
-           return item.alive;
-        });
-    }
-
-    to_string() {
-        var result = "";
-        for (var i in this.sugar) {
-            result += this.sugar[i].to_string();
-        }
-        return result;
-    }
-}
-
-class Sugar {
-    constructor(position, energy) {
-        this.position = position;
-        this.energy = energy;
-        this.alive = true;
-    }
-
-    to_string() {
-        return "Sugar," + this.position[0] + "," + this.position[1] + ";";
     }
 }
 
@@ -294,12 +305,11 @@ io.on('connection', function(socket) {
 });
 
 var mip = new Species("Mip", 0.5, 0.5, 0.5, 0.5, 0.5);
-var newp = new Species("Newp", 0.5, 0.5, 0.5, 0.5, 0.5);
-var sugar = new SugarContainer(200);
+var newp = new Species("Newp", 0.5, 1.0, 0.5, 0.3, 0.3);
 species.push(mip);
 species.push(newp);
-mip.populate(50, [0.3, 0.3]);
-newp.populate(50, [0.7, 0.7]);
+mip.populate(30, [0.3, 0.3]);
+newp.populate(30, [0.7, 0.7]);
 
 function packet() {
     var p = "";
@@ -313,7 +323,8 @@ function packet() {
 setInterval(function() {
 	var date = new Date();
 	var newTime = date.getTime();
-	var dt = time - newTime;
+	var dt = newTime - time;
+	simulation_age += dt/1000;
 
 	for (var i in client_ids) {
 	    io.to(client_ids[i]).emit("update", packet());
