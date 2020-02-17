@@ -6,8 +6,8 @@ var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.docum
 
 var dragging = -1;
 var to_render = [];
-var id_to_color = {"Mip": [220, 30, 40],
-                    "Newp": [30, 120, 240]};
+var colors = [[220, 30, 40], [30, 120, 240], [240, 130, 30]].reverse();
+var id_to_color = {};
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -47,10 +47,13 @@ class AgentRender {
 	    var split = agent_string.split(",");
 
 	    this.id = split[0];
+	    if (!(this.id in id_to_color)) {
+	        id_to_color[this.id] = colors.pop();
+	    }
 	    this.color = id_to_color[this.id]; // TODO don't hard-code colors
 	    this.pos = [parseFloat(split[1]), parseFloat(split[2])];
 	    this.immune = parseInt(split[3]);
-	    this.diameter = 0.007
+	    this.diameter = 0.007;
 	}
 
 	render(canvas, context) {
