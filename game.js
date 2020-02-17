@@ -1,7 +1,8 @@
 var socket = io();
 
 var ticks = 60;
-var host = true;
+var host = false;
+var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
 var to_render = [];
@@ -10,8 +11,8 @@ var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
 canvas.style.top = 0;
 canvas.style.left = 0;
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = window.innerWidth*pxRatio;
+canvas.height = window.innerHeight*pxRatio;
 
 class AgentRender {
 	constructor(agent_string) {
@@ -105,9 +106,7 @@ socket.on("update", function(packet) {
 });
 
 setInterval(function() {
-	var canvas = document.getElementById('canvas');
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas = document.getElementById('canvas');
 	context = canvas.getContext('2d');
 	context.imageSmoothingEnabled = false;
 
@@ -119,12 +118,13 @@ document.addEventListener('mouseup', function(event) {
 });
 
 document.addEventListener('mousedown', function(event) {
+	console.log(pxRatio);
 	for (var i in buttons) {
 		var button = buttons[i];
-		if (event.clientX >= button.x*window.innerWidth - ((button.type == 'slider') ? button.size*window.innerWidth : 0) && event.clientX <= button.x*window.innerWidth + button.width*window.innerWidth + ((button.type == 'slider') ? button.size*window.innerWidth : 0) && event.clientY >= button.y*window.innerHeight - ((button.type == 'slider') ? button.size*window.innerWidth : 0) && event.clientY <= button.y*window.innerHeight + button.height*window.innerHeight + ((button.type == 'slider') ? button.size*window.innerWidth : 0)) {
+		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
 			if (button.type == 'slider') {
-				console.log((button.x*window.innerWidth + event.clientX)/(button.x*window.innerWidth + button.width*window.innerWidth));
-				button.value = Math.min(Math.max((button.x*window.innerWidth + event.clientX)/(button.x*window.innerWidth + button.width*window.innerWidth), 0), 1);
+				button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
+				dragging = i;
 			} else {
 				button.onClick();
 			}
@@ -132,4 +132,22 @@ document.addEventListener('mousedown', function(event) {
 			break;
 		}
 	}
+});
+
+document.addEventListener('mousemove', function(event) {
+	if (dragging != -1) {
+		var button = buttons[dragging];
+		button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
+	}
+});
+
+window.addEventListener('resize', function(event) {
+	var newPxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
+	if (newPxRatio == pxRatio) {
+		canvas.width = window.innerWidth*pxRatio;
+		canvas.height = window.innerHeight*pxRatio;
+	} else {
+		pxRatio = newPxRatio;
+	}
+
 });
