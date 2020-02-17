@@ -7,7 +7,8 @@ var server = http.Server(app);
 var io = socketIO(server);
 
 var port = 5000;
-var ticks = 40;
+var simulation_ticks = 60;
+var packet_ticks = 20;
 var date = new Date();
 var time = date.getTime();
 var simulation_age = 0;
@@ -18,6 +19,22 @@ var host_list = [];
 
 var sim_width = 1;
 var sim_height = 1;
+var sim_speed = 1.0;
+var started = true;
+
+var spawn_positions = [[0.2, 0.2],
+                       [0.8, 0.8],
+                       [0.8, 0.2],
+                       [0.2, 0.8],
+                       [0.5, 0.5],
+                       [0.5, 0.2],
+                       [0.5, 0.8],
+                       [0.8, 0.5],
+                       [0.2, 0.5],
+                       [0.65, 0.35],
+                       [0.35, 0.65],
+                       [0.65, 0.65],
+                       [0.35, 0.35]].reverse();
 
 
 class SugarContainer {
@@ -61,7 +78,9 @@ class Sugar {
     }
 
     to_string() {
-        return "Sugar," + this.position[0] + "," + this.position[1] + ";";
+        var x = Math.floor(this.position[0] * 10000) / 10000;
+        var y = Math.floor(this.position[1] * 10000) / 10000;
+        return "S," + x + "," + y + ";";
     }
 }
 
@@ -117,6 +136,15 @@ class Species{
             }
         }
     }
+
+    kill_all_not_immune() {
+        // Kill all members of the species that have not developed resistance to antibiotics
+        for (var i in this.agents) {
+            if (!this.agents[i].is_immune()) {
+                this.agents[i].die();
+            }
+        }
+    }
 }
 
 
@@ -125,7 +153,7 @@ class Agent{
         this.species = species;
         this.rand_max = 100;
         this.collision_radius = 0.01;
-        this.speed = 0.02 * Math.random();  // TODO make flagella stat affect speed and/or perception distance
+        this.speed = sim_speed * (0.005 + 0.01 * this.species.flagella) * (Math.random() * 0.9 + 0.1);
         this.direction = this.random_direction();
         this.fitness = this.random_value(this.rand_max);
         this.position = position.slice();
@@ -134,7 +162,7 @@ class Agent{
 
         this.target = null;
         this.target_dist = null;
-        this.perception_distance = 0.04;
+        this.perception_distance = 0.03 + 0.03 * this.species.flagella;
 
         this.age = 0;
     }
@@ -179,7 +207,7 @@ class Agent{
             this.target_dist = Math.pow(dx, 2) + Math.pow(dy, 2);
         }
         if (this.target_dist == null || this.target_dist > dist2) {
-            if (simulation_age > 1) {
+            if (simulation_age > 3) {
                 this.target = other;
                 this.target_dist = dist2;
             }
@@ -245,6 +273,15 @@ class Agent{
         this.age += dt;
     }
 
+    sstring(stat) {
+        // Converts a single stat to a string character
+        return (Math.floor(stat * 5)).toString();
+    }
+
+    stat_string() {
+        return (this.sstring(this.species.metabolism) + this.sstring(this.species.flagella) + this.sstring(this.species.toxicity) + this.sstring(this.species.robustness));
+    }
+
     to_string() {
         var x = Math.floor(this.position[0] * 10000) / 10000;
         var y = Math.floor(this.position[1] * 10000) / 10000;
@@ -252,7 +289,7 @@ class Agent{
         if (this.is_immune()) {
             immune = 1;
         }
-        var result = this.species.id + "," + x + "," + y + "," + immune + ";";
+        var result = this.species.id + "," + x + "," + y + "," + immune + "," + this.stat_string() + ";";
         return result;
     }
 
@@ -298,7 +335,7 @@ io.on('connection', function(socket) {
 		try {
 		    var new_species = new Species(id, mutation_rate, metabolism, flagella, toxicity, robustness);
 		    species.push(new_species);
-		    new_species.populate(10, [0, 0]);
+		    new_species.populate(30, spawn_positions.pop());
 		} catch (e) {
 			console.log(e);
 		}
@@ -312,15 +349,41 @@ io.on('connection', function(socket) {
    	});
 });
 
-var mip = new Species("Mip", 0.5, 0.5, 0.5, 0.5, 0.5);
-var newp = new Species("Newp", 0.5, 1.0, 0.5, 0.3, 0.3);
-species.push(mip);
-species.push(newp);
-mip.populate(30, [0.3, 0.3]);
-newp.populate(30, [0.7, 0.7]);
+function time_string() {
+    var remaining = Math.max(300 - simulation_age, 0);
+    var seconds = Math.floor(remaining % 60);
+    if (seconds.toString().length == 1) {
+        seconds = "0" + seconds;
+    }
+    var minutes = Math.floor(remaining/60);
+    return ("Time," + minutes + ":" + seconds + ";");
+}
+
+var a = new Species("Mip", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var b = new Species("Newp", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var c = new Species("Literally E. coli", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var d = new Species("Nathius sampolium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var e = new Species("Paul nadanius", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var f = new Species("Jeremus cryanus", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+var g = new Species("R. martellium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
+species.push(a);
+species.push(b);
+species.push(c);
+species.push(d);
+species.push(e);
+species.push(f);
+species.push(g);
+a.populate(30, spawn_positions.pop());
+b.populate(30, spawn_positions.pop());
+c.populate(30, spawn_positions.pop());
+d.populate(30, spawn_positions.pop());
+e.populate(30, spawn_positions.pop());
+f.populate(30, spawn_positions.pop());
+g.populate(30, spawn_positions.pop());
 
 function packet() {
     var p = "";
+    p += time_string();
     p += sugar.to_string();
     for (var i in species) {
         p += species[i].to_string();
@@ -328,22 +391,40 @@ function packet() {
     return p;
 }
 
+function start_simulation() {
+    var started = true;
+}
+
+setInterval(function() {
+	for (var i in host_list) {
+	    io.to(host_list[i]).emit("update", packet());
+	}
+}, 1000/packet_ticks);
+
 setInterval(function() {
 	var date = new Date();
 	var newTime = date.getTime();
 	var dt = newTime - time;
-	simulation_age += dt/1000;
-
-	for (var i in host_list) {
-	    io.to(host_list[i]).emit("update", packet());
+	if (started) {
+		simulation_age += dt/1000;
 	}
-    for (var i in species) {
-        for (var j in species[i].agents) {
-            species[i].agents[j].update(dt/1000);
+
+    // After five minutes, all cells without resistance die
+	if (simulation_age > 300) {
+	    for (var i in species) {
+	        species[i].kill_all_not_immune();
+	    }
+	}
+
+	if (started) {
+        for (var i in species) {
+            for (var j in species[i].agents) {
+                species[i].agents[j].update(dt/1000);
+            }
+            species[i].check_collisions();
+            species[i].bring_out_your_dead();
         }
-        species[i].check_collisions();
-        species[i].bring_out_your_dead();
+        sugar.bring_out_your_dead();
     }
-    sugar.bring_out_your_dead();
     time = newTime;
-}, 1000/ticks);
+}, 1000/simulation_ticks);
