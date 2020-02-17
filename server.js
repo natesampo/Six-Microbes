@@ -17,6 +17,7 @@ var client_ids = [];
 
 var sim_width = 1;
 var sim_height = 1;
+var sim_speed = 1.0;
 
 
 class SugarContainer {
@@ -116,6 +117,15 @@ class Species{
             }
         }
     }
+
+    kill_all_not_immune() {
+        // Kill all members of the species that have not developed resistance to antibiotics
+        for (var i in this.agents) {
+            if (!this.agents[i].is_immune()) {
+                this.agents[i].die();
+            }
+        }
+    }
 }
 
 
@@ -124,7 +134,7 @@ class Agent{
         this.species = species;
         this.rand_max = 100;
         this.collision_radius = 0.01;
-        this.speed = 0.02 * Math.random();  // TODO make flagella stat affect speed and/or perception distance
+        this.speed = sim_speed * (0.005 + 0.01 * this.species.flagella) * (Math.random() * 0.9 + 0.1);
         this.direction = this.random_direction();
         this.fitness = this.random_value(this.rand_max);
         this.position = position.slice();
@@ -133,7 +143,7 @@ class Agent{
 
         this.target = null;
         this.target_dist = null;
-        this.perception_distance = 0.04;
+        this.perception_distance = 0.03 + 0.03 * this.species.flagella;
 
         this.age = 0;
     }
@@ -178,7 +188,7 @@ class Agent{
             this.target_dist = Math.pow(dx, 2) + Math.pow(dy, 2);
         }
         if (this.target_dist == null || this.target_dist > dist2) {
-            if (simulation_age > 1) {
+            if (simulation_age > 3) {
                 this.target = other;
                 this.target_dist = dist2;
             }
@@ -244,6 +254,15 @@ class Agent{
         this.age += dt;
     }
 
+    sstring(stat) {
+        // Converts a single stat to a string character
+        return (Math.floor(stat * 5)).toString();
+    }
+
+    stat_string() {
+        return (this.sstring(this.species.metabolism) + this.sstring(this.species.flagella) + this.sstring(this.species.toxicity) + this.sstring(this.species.robustness));
+    }
+
     to_string() {
         var x = Math.floor(this.position[0] * 10000) / 10000;
         var y = Math.floor(this.position[1] * 10000) / 10000;
@@ -251,7 +270,7 @@ class Agent{
         if (this.is_immune()) {
             immune = 1;
         }
-        var result = this.species.id + "," + x + "," + y + "," + immune + ";";
+        var result = this.species.id + "," + x + "," + y + "," + immune + "," + this.stat_string() + ";";
         return result;
     }
 
@@ -304,15 +323,29 @@ io.on('connection', function(socket) {
    	});
 });
 
-var mip = new Species("Mip", 0.5, 0.5, 0.5, 0.5, 0.5);
-var newp = new Species("Newp", 0.5, 1.0, 0.5, 0.3, 0.3);
+function time_string() {
+    var remaining = Math.max(300 - simulation_age, 0);
+    var seconds = Math.floor(remaining % 60);
+    if (seconds.length == 1) {
+        seconds = "0" + seconds;
+    }
+    var minutes = Math.floor(remaining/60);
+    return ("Time," + minutes + ":" + seconds + ";");
+}
+
+var mip = new Species("Mip", 0.5, 0.6, 0.2, 0.6, 0.6);
+var newp = new Species("Newp", 0.5, 1.0, 1.0, 0.4, 0.2);
+var gomp = new Species("Literally E. coli", 0.5, 0.2, 0.8, 1.0, 1.0);
 species.push(mip);
 species.push(newp);
+species.push(gomp);
 mip.populate(30, [0.3, 0.3]);
 newp.populate(30, [0.7, 0.7]);
+gomp.populate(2, [0.7, 0.3]);
 
 function packet() {
     var p = "";
+    p += time_string();
     p += sugar.to_string();
     for (var i in species) {
         p += species[i].to_string();
@@ -325,6 +358,13 @@ setInterval(function() {
 	var newTime = date.getTime();
 	var dt = newTime - time;
 	simulation_age += dt/1000;
+
+    // After five minutes, all cells without resistance die
+	if (simulation_age > 300) {
+	    for (var i in species) {
+	        species[i].kill_all_not_immune();
+	    }
+	}
 
 	for (var i in client_ids) {
 	    io.to(client_ids[i]).emit("update", packet());
