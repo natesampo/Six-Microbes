@@ -80,6 +80,10 @@ class Agent{
         this.position = position.slice();
         this.alive = true;
         this.energy = 1;
+
+        this.target = null;
+        this.target_dist = null;
+        this.perception_distance = 0.03;
     }
 
     random_direction() {
@@ -115,6 +119,17 @@ class Agent{
         var dy = Math.abs(this.position[1] - other.position[1]);
         var dist2 = Math.pow(dx, 2) + Math.pow(dy, 2);
         var result = (dist2 < Math.pow(this.collision_radius, 2))
+
+        if (this.target_dist != null) {
+            var dx = this.target.position[0] - this.position[0];
+            var dy = this.target.position[1] - this.position[1];
+            this.target_dist = Math.pow(dx, 2) + Math.pow(dy, 2);
+        }
+        if (this.target_dist == null || this.target_dist > dist2) {
+            this.target = other;
+            this.target_dist = dist2;
+        }
+
         return result;
     }
 
@@ -155,12 +170,23 @@ class Agent{
         this.alive = false;
     }
 
+    update_target() {
+        if (this.target != null && this.target.alive && this.target_dist < Math.pow(this.perception_distance, 2)) {
+            var dx = this.target.position[0] - this.position[0];
+            var dy = this.target.position[1] - this.position[1];
+            var mag = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+            this.direction[0] = -dx/mag;
+            this.direction[1] = -dy/mag;
+        }
+    }
+
     update(dt) {
         this.position[0] += dt * this.direction[0] * this.speed;
         this.position[1] += dt * this.direction[1] * this.speed;
         this.check_bounce();
         this.eat_sugar();
         this.reproduce();
+        this.update_target();
     }
 
     to_string() {

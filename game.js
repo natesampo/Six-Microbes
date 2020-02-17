@@ -1,7 +1,7 @@
 var socket = io();
 
 var ticks = 60;
-var host = false;
+var host = true;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
