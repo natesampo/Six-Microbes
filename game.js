@@ -92,6 +92,8 @@ class SpeciesCard {
         var font_size = canvas.height/25;
         context.font = (font_size).toString() + 'px Arial';
         context.fillStyle = color_context(id_to_color[this.id], 1);
+        context.strokeStyle = 'rgba(0, 0, 0, 1)';
+        // TODO change stroke color to white if immunity exists in population
         var text_padding_x = 0.01 * canvas.width;
         context.strokeText(this.id, x + text_padding_x, y + height/2 + font_size/2);
 		context.fillText(this.id, x + text_padding_x, y + height/2 + font_size*3/8);
@@ -345,7 +347,7 @@ socket.on("update", function(packet) {
         var pieces = packet.split(";");
         for (let i in pieces) {
             var info = pieces[i].split(",");
-            if (info[0] == "Sugar") {
+            if (info[0] == "S") {
                 to_render.push(new SugarRender(pieces[i]));
             } else if (info[0] == "Time") {
                 time_remaining = info[1];

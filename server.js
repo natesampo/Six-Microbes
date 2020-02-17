@@ -7,7 +7,8 @@ var server = http.Server(app);
 var io = socketIO(server);
 
 var port = 5000;
-var ticks = 40;
+var simulation_ticks = 60;
+var packet_ticks = 20;
 var date = new Date();
 var time = date.getTime();
 var simulation_age = 0;
@@ -77,7 +78,9 @@ class Sugar {
     }
 
     to_string() {
-        return "Sugar," + this.position[0] + "," + this.position[1] + ";";
+        var x = Math.floor(this.position[0] * 10000) / 10000;
+        var y = Math.floor(this.position[1] * 10000) / 10000;
+        return "S," + x + "," + y + ";";
     }
 }
 
@@ -393,6 +396,12 @@ function start_simulation() {
 }
 
 setInterval(function() {
+	for (var i in host_list) {
+	    io.to(host_list[i]).emit("update", packet());
+	}
+}, 1000/packet_ticks);
+
+setInterval(function() {
 	var date = new Date();
 	var newTime = date.getTime();
 	var dt = newTime - time;
@@ -407,11 +416,6 @@ setInterval(function() {
 	    }
 	}
 
-
-	for (var i in host_list) {
-	    io.to(host_list[i]).emit("update", packet());
-	}
-
 	if (started) {
         for (var i in species) {
             for (var j in species[i].agents) {
@@ -423,4 +427,4 @@ setInterval(function() {
         sugar.bring_out_your_dead();
     }
     time = newTime;
-}, 1000/ticks);
+}, 1000/simulation_ticks);
