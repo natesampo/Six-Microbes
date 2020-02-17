@@ -8,7 +8,7 @@ var io = socketIO(server);
 
 var port = 5000;
 var ticks = 2;
-
+var time = Date.getTime();
 
 var species = [];
 var client_ids = [];
@@ -145,8 +145,11 @@ function packet() {
 }
 
 setInterval(function() {
+	var newTime = Date.getTime();
+	var dt = time - newTime;
+
 	for (var i in client_ids) {
-	    io.to(client_ids[i]).emit("update", "packet()");
+	    io.to(client_ids[i]).emit("update", packet());
 	    console.log(client_ids[i]);
 	}
     for (var i in species) {
@@ -155,4 +158,6 @@ setInterval(function() {
             species[i].agents[j].update(0.1);
         }
     }
+
+    time = newTime;
 }, 1000/ticks);

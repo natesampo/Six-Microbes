@@ -1,7 +1,7 @@
 var socket = io();
 
 var ticks = 60;
-var host = false;
+var host = true;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
@@ -20,6 +20,7 @@ class AgentRender {
 
 	    this.id = split[0];
 	    this.survivability = parseFloat(split[1]);
+	    var color = [255, 255, 255];
 	    this.color = color.slice();
 	    this.pos = [parseFloat(split[2]), parseFloat(split[3])];
 	    console.log(agent_string);
@@ -33,7 +34,7 @@ class AgentRender {
 
 		context.fillStyle = 'rgba(' + this.color[0] + ', ' + this.color[1] + ', ' + this.color[2] + ', 1)';
 		context.beginPath();
-		context.arc(x, y, width, 0, 2*Math.PI);
+		context.arc(x*canvas.width, y*canvas.height, width, 0, 2*Math.PI);
 		context.fill();
 		context.closePath();
 		console.log("woo");
