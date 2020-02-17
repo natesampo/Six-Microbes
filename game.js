@@ -8,6 +8,7 @@ var dragging = -1;
 var to_render = [];
 var colors = [[220, 30, 40], [30, 120, 240], [240, 130, 30]].reverse();
 var id_to_color = {};
+var species_cards = [];
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -15,6 +16,37 @@ canvas.style.top = 0;
 canvas.style.left = 0;
 canvas.width = window.innerWidth*pxRatio;
 canvas.height = window.innerHeight*pxRatio;
+
+function x_to_draw(x) {
+    return (x * 9/16 * canvas.width);
+}
+
+function y_to_draw(y) {
+    return (y * canvas.height);
+}
+
+class SpeciesCard {
+    constructor(species_id) {
+        this.id = species_id;
+        this.color = [120, 120, 120];
+        if (!(this.id in id_to_color)) {
+            this.color = id_to_color[this.id];
+        }
+        to_render.push(this);
+    }
+
+    render(canvas, context) {
+        var xmin = 10/16 * canvas.width;
+        var xmax = 15/16 * canvas.height;
+        var width = xmax - xmin;
+        var ymin = 1/16 * canvas.height;
+        ymin += 2/16 * canvas.height * species_cards.indexOf(this);
+        var height = 2/16 * canvas.height;
+
+        context.fillStyle = 'rgba(0, 255, 255, 1)';
+        context.fillRect(xmin, ymin, width, height);
+    }
+}
 
 class SugarRender {
 	constructor(agent_string) {
@@ -27,12 +59,12 @@ class SugarRender {
 	render(canvas, context) {
 		var x = this.pos[0];
 		var y = this.pos[1];
-		var width = canvas.width * this.diameter;
-		var height = canvas.height * this.diameter;
+		var width = x_to_draw(this.diameter);
+		var height = y_to_draw(this.diameter);
 
 		context.fillStyle = 'rgba(180, 180, 180, 1)';
 		context.beginPath();
-		context.rect(x*canvas.width, y*canvas.height, width, height);
+		context.rect(x_to_draw(x), y_to_draw(y), width, height);
 		context.fill();
 		context.closePath();
 	}
@@ -49,6 +81,7 @@ class AgentRender {
 	    this.id = split[0];
 	    if (!(this.id in id_to_color)) {
 	        id_to_color[this.id] = colors.pop();
+	        species_cards.push(new SpeciesCard(this.id));
 	    }
 	    this.color = id_to_color[this.id]; // TODO don't hard-code colors
 	    this.pos = [parseFloat(split[1]), parseFloat(split[2])];
@@ -59,26 +92,26 @@ class AgentRender {
 	render(canvas, context) {
 		var x = this.pos[0];
 		var y = this.pos[1];
-		var width = canvas.width * this.diameter;
-		var height = canvas.height * this.diameter;
+		var width = x_to_draw(this.diameter);
+		var height = y_to_draw(this.diameter);
 
 		if (this.immune == 1) {
 		    context.fillStyle = color_context([255, 255, 255], 1);
             context.beginPath();
-            context.ellipse(x*canvas.width, y*canvas.height, width*1.2, height*1.2, 0, 0, 2*Math.PI);
+            context.ellipse(x_to_draw(x), y_to_draw(y), width*1.2, height*1.2, 0, 0, 2*Math.PI);
             context.fill();
             context.closePath();
 		}
 
 		context.fillStyle = color_context(this.color, 1);
 		context.beginPath();
-		context.ellipse(x*canvas.width, y*canvas.height, width, height, 0, 0, 2*Math.PI);
+		context.ellipse(x_to_draw(x), y_to_draw(y), width, height, 0, 0, 2*Math.PI);
 		context.fill();
 		context.closePath();
 
 		context.fillStyle = color_context([this.color[0] + 100, this.color[1] + 100, this.color[2] + 100], 1);
 		context.beginPath();
-		context.ellipse(x*canvas.width, y*canvas.height, width/2, height/2, 0, 0, 2*Math.PI);
+		context.ellipse(x_to_draw(x), y_to_draw(y), width/2, height/2, 0, 0, 2*Math.PI);
 		context.fill();
 		context.closePath();
 	}
