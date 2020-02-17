@@ -6,6 +6,8 @@ var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.docum
 
 var dragging = -1;
 var to_render = [];
+var id_to_color = {"Mip": [220, 30, 40],
+                    "Newp": [30, 120, 240]};
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -14,30 +16,68 @@ canvas.style.left = 0;
 canvas.width = window.innerWidth*pxRatio;
 canvas.height = window.innerHeight*pxRatio;
 
-class AgentRender {
+class SugarRender {
 	constructor(agent_string) {
 	    var split = agent_string.split(",");
-
 	    this.id = split[0];
-	    this.survivability = parseFloat(split[1]);
-	    var color = [255, 255, 255];
-	    this.color = color.slice();
-	    this.pos = [parseFloat(split[2]), parseFloat(split[3])];
-	    console.log(agent_string);
+	    this.pos = [parseFloat(split[1]), parseFloat(split[2])];
+	    this.diameter = 0.003;
 	}
 
 	render(canvas, context) {
 		var x = this.pos[0];
 		var y = this.pos[1];
-		var width = (this.survivability + 1) * canvas.width * 0.01;
-		var height = (this.survivability + 1) * canvas.width * 0.01;
+		var width = canvas.width * this.diameter;
+		var height = canvas.height * this.diameter;
 
-		context.fillStyle = 'rgba(' + this.color[0] + ', ' + this.color[1] + ', ' + this.color[2] + ', 1)';
+		context.fillStyle = 'rgba(180, 180, 180, 1)';
 		context.beginPath();
-		context.arc(x*canvas.width, y*canvas.height, width, 0, 2*Math.PI);
+		context.rect(x*canvas.width, y*canvas.height, width, height);
 		context.fill();
 		context.closePath();
-		console.log("woo");
+	}
+}
+
+function color_context(color_list, alpha) {
+    return 'rgba(' + color_list[0] + ', ' + color_list[1] + ', ' + color_list[2] + ', ' + alpha + ')';
+}
+
+class AgentRender {
+	constructor(agent_string) {
+	    var split = agent_string.split(",");
+
+	    this.id = split[0];
+	    this.color = id_to_color[this.id]; // TODO don't hard-code colors
+	    this.pos = [parseFloat(split[1]), parseFloat(split[2])];
+	    this.immune = parseInt(split[3]);
+	    this.diameter = 0.007
+	}
+
+	render(canvas, context) {
+		var x = this.pos[0];
+		var y = this.pos[1];
+		var width = canvas.width * this.diameter;
+		var height = canvas.height * this.diameter;
+
+		if (this.immune == 1) {
+		    context.fillStyle = color_context([255, 255, 255], 1);
+            context.beginPath();
+            context.ellipse(x*canvas.width, y*canvas.height, width*1.2, height*1.2, 0, 0, 2*Math.PI);
+            context.fill();
+            context.closePath();
+		}
+
+		context.fillStyle = color_context(this.color, 1);
+		context.beginPath();
+		context.ellipse(x*canvas.width, y*canvas.height, width, height, 0, 0, 2*Math.PI);
+		context.fill();
+		context.closePath();
+
+		context.fillStyle = color_context([this.color[0] + 100, this.color[1] + 100, this.color[2] + 100], 1);
+		context.beginPath();
+		context.ellipse(x*canvas.width, y*canvas.height, width/2, height/2, 0, 0, 2*Math.PI);
+		context.fill();
+		context.closePath();
 	}
 }
 
@@ -99,7 +139,12 @@ socket.on("update", function(packet) {
     try {
         var pieces = packet.split(";");
         for (let i in pieces) {
-            to_render.push(new AgentRender(pieces[i]));
+            var info = pieces[i].split(",");
+            if (info[0] == "Sugar") {
+                to_render.push(new SugarRender(pieces[i]));
+            } else {
+                to_render.push(new AgentRender(pieces[i]));
+            }
         }
     } catch(e) {
         console.log(e);
