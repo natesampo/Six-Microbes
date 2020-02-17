@@ -181,11 +181,28 @@ class PointDisplay {
 		context.strokeStyle = 'rgba(5, 5, 5, 1)';
 		context.lineWidth = 2;
 		context.beginPath();
-		context.rect(canvas.width*this.x, canvas.height*this.y, canvas.width*this.width, canvas.height*(this.height/2 - 0.001));
+		context.rect(canvas.width*this.x, canvas.height*this.y, canvas.width*this.width, canvas.height*(this.height/2 - 0.0025));
+		context.moveTo(canvas.width*this.x, canvas.height*(this.y + this.height/2 + 0.0025));
+		context.rect(canvas.width*this.x, canvas.height*(this.y + this.height/2 + 0.0025), canvas.width*this.width, canvas.height*(this.height/2 - 0.0025));
 		context.fill();
 		context.stroke();
 		context.closePath();
 
+		context.fillStyle = 'rgba(5, 5, 5, 1)';
+		context.lineWidth = 3;
+		context.beginPath();
+		context.moveTo(canvas.width*(this.x + this.width*0.2), canvas.height*(this.y + (this.height/2 - 0.0025)/2 - this.height*0.07) + (canvas.height*this.height*0.15)/2);
+		context.lineTo(canvas.width*(this.x + this.width*0.2) + canvas.width*this.width*0.6, canvas.height*(this.y + (this.height/2 - 0.0025)/2 - this.height*0.07) + (canvas.height*this.height*0.15)/2);
+		context.moveTo(canvas.width*(this.x + this.width*0.2) + canvas.width*this.width*0.3, canvas.height*(this.y + (this.height/2 - 0.0025)/2 - this.height*0.125));
+		context.lineTo(canvas.width*(this.x + this.width*0.2) + canvas.width*this.width*0.3, canvas.height*(this.y + (this.height/2 - 0.0025)/2 + this.height*0.13));
+		context.moveTo(canvas.width*(this.x + this.width*0.2), canvas.height*(this.y + this.height/2 + 0.0025 + (this.height/2 - 0.0025)/2 - this.height*0.07) + (canvas.height*this.height*0.15)/2);
+		context.lineTo(canvas.width*(this.x + this.width*0.2) + canvas.width*this.width*0.6, canvas.height*(this.y + this.height/2 + 0.0025 + (this.height/2 - 0.0025)/2 - this.height*0.07) + (canvas.height*this.height*0.15)/2);
+		context.stroke();
+		context.closePath();
+
+		context.fillStyle = 'rgba(230, 230, 230, 1)';
+		context.strokeStyle = 'rgba(5, 5, 5, 1)';
+		context.lineWidth = 2;
 		for (var i=0; i<window[this.stat]; i++) {
 			context.beginPath();
 			context.rect(canvas.width*(this.displayX + i*(this.segmentGap + this.segmentWidth)), canvas.height*this.displayY, canvas.width*this.segmentWidth, canvas.height*this.segmentHeight);
