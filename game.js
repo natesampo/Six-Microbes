@@ -343,7 +343,7 @@ function render(canvas, context) {
         context.fillStyle = 'rgba(40, 40, 40, 1)';
 	    context.fillRect(0, 0, canvas.width, canvas.height);
         species_cards.sort(function(a, b) {
-           return (id_to_count[a.id] < id_to_count[b.id]);
+           return id_to_count[b.id] - id_to_count[a.id];
         });
     	for (var i in to_render) {
 	        to_render[i].render(canvas, context);
