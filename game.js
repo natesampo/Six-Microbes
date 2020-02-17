@@ -16,6 +16,7 @@ var colors = [[220, 30, 40],
 var id_to_color = {};
 var id_to_count = {};
 var id_to_stats = {};
+var id_to_immunity = {};
 var species_cards = [];
 var time_remaining = "5:00"
 var maxStats = 5;
@@ -87,15 +88,24 @@ class SpeciesCard {
 
         context.fillStyle = 'rgba(0, 0, 0, 1)';
         context.fillRect(x, y, width, height);
+        if (this.id in id_to_immunity) {
+            context.lineWidth = 1;
+            if (id_to_immunity[this.id]) {
+                context.lineWidth = 1;
+                context.strokeStyle = 'rgba(255, 255, 255, 1)';
+                context.strokeRect(x, y, width, height);
+                context.lineWidth = 8;
+                context.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                context.strokeRect(x, y, width, height);
+            }
+        }
 
         // Draw species name
         var font_size = canvas.height/25;
         context.font = (font_size).toString() + 'px Arial';
         context.fillStyle = color_context(id_to_color[this.id], 1);
         context.strokeStyle = 'rgba(0, 0, 0, 1)';
-        // TODO change stroke color to white if immunity exists in population
         var text_padding_x = 0.01 * canvas.width;
-        context.strokeText(this.id, x + text_padding_x, y + height/2 + font_size/2);
 		context.fillText(this.id, x + text_padding_x, y + height/2 + font_size*3/8);
 
 		// Draw population size
@@ -108,7 +118,6 @@ class SpeciesCard {
 		context.font = (font_size).toString() + 'px Arial';
         context.fillStyle = color_context(id_to_color[this.id], 1);
         var text_padding_x = 0.19 * canvas.width;
-        context.strokeText(population, x + text_padding_x, y + height/2 + font_size/2);
 		context.fillText(population, x + text_padding_x, y + height/2 + font_size*3/8);
 
 		// Draw stats
@@ -186,6 +195,11 @@ class AgentRender {
 	    this.color = id_to_color[this.id];
 	    this.pos = [parseFloat(split[1]), parseFloat(split[2])];
 	    this.immune = parseInt(split[3]);
+	    if (!(this.id in id_to_immunity)) {
+	        id_to_immunity[this.id] = this.immune;
+	    } else {
+	        id_to_immunity[this.id] = (this.immune || id_to_immunity[this.id]);
+	    }
 	    var stat_string = split[4];
 	    id_to_stats[this.id] = stat_string;
 
@@ -343,6 +357,7 @@ socket.on("update", function(packet) {
     to_render = species_cards.slice();
     to_render.push(new TimeBoard());
     id_to_count = {};
+    id_to_immunity = {};
     try {
         var pieces = packet.split(";");
         for (let i in pieces) {

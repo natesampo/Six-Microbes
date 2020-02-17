@@ -151,7 +151,7 @@ class Species{
 class Agent{
     constructor(species, position) {
         this.species = species;
-        this.rand_max = 100;
+        this.rand_max = 50;
         this.collision_radius = 0.01;
         this.speed = sim_speed * (0.005 + 0.01 * this.species.flagella) * (Math.random() * 0.9 + 0.1);
         this.direction = this.random_direction();
