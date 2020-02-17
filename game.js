@@ -322,8 +322,12 @@ class PointDisplay {
 		}
 	}
 
-	onClick() {
-		console.log('wow');
+	onClick(x, y) {
+		if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*this.y && y <= canvas.height*(this.y + this.height/2 - 0.0025)) {
+			window[this.stat] = Math.min(window[this.stat]+1, maxStats);
+		} else if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*(this.y + this.height/2 + 0.0025) && y <= canvas.height*(this.y + this.height/2 + 0.0025 + this.height/2 - 0.0025)) {
+			window[this.stat] = Math.max(window[this.stat]-1, 1);
+		}
 	}
 }
 
@@ -396,7 +400,7 @@ document.addEventListener('mousedown', function(event) {
 				button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 				dragging = i;
 			} else {
-				button.onClick();
+				button.onClick(event.clientX, event.clientY);
 			}
 
 			break;
