@@ -1,7 +1,7 @@
 var socket = io();
 
 var ticks = 60;
-var host = true;
+var host = false;
 var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.documentElement.clientWidth;
 
 var dragging = -1;
@@ -113,7 +113,8 @@ class Slider {
 }
 
 var buttons = [];
-buttons.push(new Slider('Mutation Rate', 0.45, 0.45, 0.1, 0.004, 0.003));
+buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
+buttons.push(new Slider('Robustness', 0.45, 0.45, 0.1, 0.004, 0.003));
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -134,7 +135,6 @@ function render(canvas, context) {
 }
 
 socket.on("update", function(packet) {
-    console.log("new packet");
     to_render = [];
     try {
         var pieces = packet.split(";");
