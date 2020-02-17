@@ -32,6 +32,11 @@ function y_to_draw(y) {
     return (y * canvas.height);
 }
 
+function become_host() {
+	host = true;
+	socket.emit('become_host');
+}
+
 class SpeciesCard {
     constructor(species_id) {
         this.id = species_id;
