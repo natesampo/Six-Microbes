@@ -212,8 +212,10 @@ class PointDisplay {
 		}
 	}
 
-	onClick() {
-		console.log('wow');
+	onClick(x, y) {
+		if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*this.y && y <= ) {
+
+		}
 	}
 }
 
@@ -277,7 +279,7 @@ document.addEventListener('mousedown', function(event) {
 				button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 				dragging = i;
 			} else {
-				button.onClick();
+				button.onClick(event.clientX, event.clientY);
 			}
 
 			break;
