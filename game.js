@@ -596,6 +596,7 @@ document.addEventListener('keydown', function(event) {
 	switch (event.keyCode) {
 		case 8: // Backspace
 			if (Name.length > 0) {
+				event.stopPropagation();
 				Name = Name.slice(0, -1);
 			}
 			break;
