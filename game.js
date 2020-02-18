@@ -34,6 +34,10 @@ canvas.style.left = 0;
 canvas.width = window.innerWidth*pxRatio;
 canvas.height = window.innerHeight*pxRatio;
 
+function points_remaining() {
+    return (statsPoints - Metabolism - Toxicity - Robustness - Flagella);
+}
+
 function x_to_draw(x) {
     return (x * 9/16 * canvas.width);
 }
