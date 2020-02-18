@@ -489,23 +489,23 @@ buttons.push(new PointIndicator(0.5, 0.71));
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-	if (done) {
-		context.fillStyle = 'rgba(80, 80, 80, 1)';
-		context.fillRect(0, 0, canvas.width, canvas.height);
-		context.fillStyle = 'rgba(255, 255, 255, 1)';
-		context.font = (canvas.width/20).toString() + 'px Arial';
-		context.fillText('THank', canvas.width/2 - context.measureText('THank').width/2, canvas.height/2);
-	} else {
-	    if (host) {
-	        context.fillStyle = 'rgba(40, 40, 40, 1)';
-		    context.fillRect(0, 0, canvas.width, canvas.height);
-	        species_cards.sort(function(a, b) {
-	           return id_to_count[b.id] - id_to_count[a.id];
-	        });
-	    	for (var i in to_render) {
-		        to_render[i].render(canvas, context);
-		    }
-	    } else {
+    if (host) {
+        context.fillStyle = 'rgba(40, 40, 40, 1)';
+	    context.fillRect(0, 0, canvas.width, canvas.height);
+        species_cards.sort(function(a, b) {
+           return id_to_count[b.id] - id_to_count[a.id];
+        });
+    	for (var i in to_render) {
+	        to_render[i].render(canvas, context);
+	    }
+    } else {
+    	if (done) {
+    		context.fillStyle = 'rgba(80, 80, 80, 1)';
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			context.fillStyle = 'rgba(255, 255, 255, 1)';
+			context.font = (canvas.width/20).toString() + 'px Arial';
+			context.fillText('THank', canvas.width/2 - context.measureText('THank').width/2, canvas.height/2);
+    	} else {
 	    	context.fillStyle = 'rgba(80, 80, 80, 1)';
 		    context.fillRect(0, 0, canvas.width, canvas.height);
 	    	for (var i in buttons) {
