@@ -291,7 +291,7 @@ class Agent{
 
     die() {
         this.alive = false;
-        sugar.add(this.position.slice(), this.energy/this.species.metabolism);
+        sugar.add(this.position.slice(), this.energy/(2*this.species.metabolism));
     }
 
     update_target() {
