@@ -112,7 +112,11 @@ class SpeciesCard {
         // Draw species name
         var font_size = canvas.height/25;
         context.font = (font_size).toString() + 'px Arial';
-        context.fillStyle = color_context(id_to_color[this.id], 1);
+        if (this.id in id_to_color) {
+            context.fillStyle = color_context(id_to_color[this.id], 1);
+        } else {
+            context.fillStyle = color_context([100, 100, 100], 1);
+        }
         context.strokeStyle = 'rgba(0, 0, 0, 1)';
         var text_padding_x = 0.01 * canvas.width;
 		context.fillText(this.id, x + text_padding_x, y + height/2 + font_size*3/8);
