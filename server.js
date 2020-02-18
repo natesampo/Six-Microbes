@@ -20,7 +20,7 @@ var host = '';
 var sim_width = 1;
 var sim_height = 1;
 var sim_speed = 0.6;
-var started = true;
+var started = false;
 
 var spawn_positions = [[0.2, 0.2],
                        [0.8, 0.8],
@@ -103,7 +103,32 @@ class Species{
     populate(number, position) {
         // Add 'number' agents at position 'position'
         for (var i = 0; i < number; i++) {
-            this.agents.push(new Agent(this, position.slice()));
+            var new_agent = new Agent(this, position.slice());
+            if (Math.random() < this.mutation_rate) {
+                new_agent.mutant = true;
+            }
+            this.agents.push(new_agent);
+        }
+    }
+
+    spawn(number, position, parent) {
+        // Add agents to the position with the given parent
+        for (var i = 0; i < number; i++) {
+            var new_agent = new Agent(this, position.slice());
+            new_agent.maybe_inherit_fitness(parent);
+            if (Math.random() < this.mutation_rate) {
+                new_agent.mutant = true;
+            }
+            this.agents.push(new_agent);
+        }
+    }
+
+    populate_no_mutation(number, position) {
+        // Add 'number' agents at position 'position' with no chance of mutation
+        for (var i = 0; i < number; i++) {
+            var new_agent = new Agent(this, position.slice());
+            new_agent.fitness = 0;
+            this.agents.push(new_agent);
         }
     }
 
@@ -153,6 +178,7 @@ class Agent{
         this.species = species;
         this.rand_max = 50;
         this.collision_radius = 0.01;
+        this.mutant = false;
 
         var base_speed = 0.0015 + this.species.flagella * 0.010;
         var variant_speed = 0.0005 + this.species.flagella * 0.005;
@@ -168,6 +194,13 @@ class Agent{
         this.perception_distance = 0.03 + 0.03 * this.species.flagella;
 
         this.age = 0;
+        this.mutant_death_time = 4 + Math.random() * 2;
+    }
+
+    maybe_inherit_fitness(parent) {
+        if (Math.random() < this.mutation_rate) {
+            this.fitness = parent.fitness;
+        }
     }
 
     random_direction() {
@@ -180,6 +213,7 @@ class Agent{
 
     reproduce() {
         // Reproduce as many times as possible while keeping energy above a threshold
+        if (this.mutant) { return; }
         while (this.energy >= 2) {
             this.energy -= 1;
             this.species.populate(1, this.position.slice());
@@ -193,6 +227,7 @@ class Agent{
 
     is_immune() {
         // Returns true if the cell has antibiotic resistance
+        if (this.mutant) { return false; }
         return (this.fitness == (this.rand_max - 1));
     }
 
@@ -221,6 +256,7 @@ class Agent{
 
     eat_sugar() {
         if (!this.alive) { return; }
+        if (this.mutant) { return; }
         for (var i in sugar.sugar) {
             if (this.is_colliding(sugar.sugar[i])) {
                 this.energy += sugar.sugar[i].energy * this.species.metabolism;
@@ -231,6 +267,15 @@ class Agent{
     }
 
     fight(other) {
+
+        if (this.mutant) {
+            this.die();
+            return;
+        } else if (other.mutant) {
+            other.die();
+            return;
+        }
+
         var my_attack = this.species.toxicity * Math.random();
         var other_defense = other.species.robustness * Math.random();
         if (my_attack >= other_defense) {
@@ -250,6 +295,9 @@ class Agent{
     }
 
     update_target() {
+
+        if (this.mutant) { return; }
+
         if (this.target != null && this.target.alive && this.target_dist < Math.pow(this.perception_distance, 2)) {
             var dx = this.target.position[0] - this.position[0];
             var dy = this.target.position[1] - this.position[1];
@@ -273,6 +321,7 @@ class Agent{
         this.eat_sugar();
         this.reproduce();
         this.update_target();
+        if (this.mutant && (this.age > this.mutant_death_time)) { this.die(); }
         this.age += dt;
     }
 
@@ -282,7 +331,9 @@ class Agent{
     }
 
     stat_string() {
-        return (this.sstring(this.species.metabolism) + this.sstring(this.species.flagella) + this.sstring(this.species.toxicity) + this.sstring(this.species.robustness));
+        var mutant_string = "0";
+        if (this.mutant) { mutant_string = "1"; }
+        return (this.sstring(this.species.metabolism) + this.sstring(this.species.flagella) + this.sstring(this.species.toxicity) + this.sstring(this.species.robustness) + mutant_string);
     }
 
     to_string() {
@@ -340,6 +391,11 @@ server.listen(process.env.PORT || port, function() {
 });
 
 
+function start_simulation() {
+    started = true;
+}
+
+
 io.on('connection', function(socket) {
     client_ids.push(socket.id);
 	console.log('New Connection');
@@ -347,7 +403,7 @@ io.on('connection', function(socket) {
 		try {
 		    var new_species = new Species(id, mutation_rate, metabolism, flagella, toxicity, robustness);
 		    species.push(new_species);
-		    new_species.populate(30, spawn_positions.pop());
+		    new_species.populate_no_mutation(30, spawn_positions.pop());
 		} catch (e) {
 			console.log(e);
 		}
@@ -364,6 +420,13 @@ io.on('connection', function(socket) {
 		} catch (e) {
 			console.log(e);
 		}
+   	});
+   	socket.on('start', function() {
+   	    try {
+   	        start_simulation();
+   	    } catch (e) {
+   	        console.log(e);
+   	    }
    	});
 });
 
@@ -391,13 +454,13 @@ species.push(d);
 species.push(e);
 species.push(f);
 species.push(g);
-a.populate(30, spawn_positions.pop());
-b.populate(30, spawn_positions.pop());
-c.populate(30, spawn_positions.pop());
-d.populate(30, spawn_positions.pop());
-e.populate(30, spawn_positions.pop());
-f.populate(30, spawn_positions.pop());
-g.populate(30, spawn_positions.pop());
+a.populate_no_mutation(30, spawn_positions.pop());
+b.populate_no_mutation(30, spawn_positions.pop());
+c.populate_no_mutation(30, spawn_positions.pop());
+d.populate_no_mutation(30, spawn_positions.pop());
+e.populate_no_mutation(30, spawn_positions.pop());
+f.populate_no_mutation(30, spawn_positions.pop());
+g.populate_no_mutation(30, spawn_positions.pop());
 
 function packet() {
     var p = "";
@@ -407,10 +470,6 @@ function packet() {
         p += species[i].to_string();
     }
     return p;
-}
-
-function start_simulation() {
-    var started = true;
 }
 
 setInterval(function() {

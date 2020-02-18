@@ -133,10 +133,10 @@ class SpeciesCard {
 		context.fillText(population, x + text_padding_x, y + height/2 + font_size*3/8);
 
 		// Draw stats
-		var m = Math.floor(parseInt(id_to_stats[this.id]) / 1000);
-		var f = Math.floor(parseInt(id_to_stats[this.id]) / 100) % 10;
-		var t = Math.floor(parseInt(id_to_stats[this.id]) / 10) % 10;
-		var r = Math.floor(parseInt(id_to_stats[this.id]) % 10);
+	    var m = Math.floor(parseInt(id_to_stats[this.id]) / 10000) % 10;
+		var f = Math.floor(parseInt(id_to_stats[this.id]) / 1000) % 10;
+		var t = Math.floor(parseInt(id_to_stats[this.id]) / 100) % 10;
+		var r = Math.floor(parseInt(id_to_stats[this.id]) / 10) % 10;
 		var metabolism = ["M", m, 0, 0];
 		var flagella = ["F", f, 0, 1];
 		var toxicity = ["T", t, 1, 0];
@@ -215,10 +215,11 @@ class AgentRender {
 	    var stat_string = split[4];
 	    id_to_stats[this.id] = stat_string;
 
-	    this.metabolism = Math.floor(parseInt(id_to_stats[this.id]) / 1000);
-		this.flagella = Math.floor(parseInt(id_to_stats[this.id]) / 100) % 10;
-		this.toxicity = Math.floor(parseInt(id_to_stats[this.id]) / 10) % 10;
-		this.robustness = Math.floor(parseInt(id_to_stats[this.id]) % 10);
+	    this.metabolism = Math.floor(parseInt(id_to_stats[this.id]) / 10000) % 10;
+		this.flagella = Math.floor(parseInt(id_to_stats[this.id]) / 1000) % 10;
+		this.toxicity = Math.floor(parseInt(id_to_stats[this.id]) / 100) % 10;
+		this.robustness = Math.floor(parseInt(id_to_stats[this.id]) / 10) % 10;
+		this.mutant = Math.floor(parseInt(id_to_stats[this.id]) % 10);
 
 		this.diameter = 0.006 + 0.004 * this.robustness/5;
 	}
@@ -237,17 +238,24 @@ class AgentRender {
             context.closePath();
 		}
 
-		context.fillStyle = color_context(this.color, 1);
+		var render_color = this.color.slice();
+		if (this.mutant == 1) {
+		    render_color[0] *= 0.6;
+		    render_color[1] *= 0.6;
+		    render_color[2] *= 0.6;
+		}
+
+		context.fillStyle = color_context(render_color, 1);
 		context.beginPath();
 		context.ellipse(x_to_draw(x), y_to_draw(y), width, height, 0, 0, 2*Math.PI);
 		context.fill();
 		context.closePath();
 
-		context.fillStyle = color_context([this.color[0] + 100, this.color[1] + 100, this.color[2] + 100], 1);
-		context.beginPath();
-		context.ellipse(x_to_draw(x), y_to_draw(y), width/2, height/2, 0, 0, 2*Math.PI);
-		context.fill();
-		context.closePath();
+        context.fillStyle = color_context([(render_color[0]+50)*1.2, (render_color[1]+50)*1.2, (render_color[2]+50)*1.2], 1);
+        context.beginPath();
+        context.ellipse(x_to_draw(x), y_to_draw(y), width/2, height/2, 0, 0, 2*Math.PI);
+        context.fill();
+        context.closePath();
 	}
 }
 
@@ -284,8 +292,8 @@ class Slider {
 
 class PointIndicator {
 	constructor(x, y) {
-		this.x = x * canvas.width;
-		this.y = y * canvas.height;
+		this.x = x;
+		this.y = y;
 		this.width = 1;
 		this.height = 1;
 		this.type = "pointIndicator";
@@ -300,7 +308,7 @@ class PointIndicator {
 		context.fillStyle = 'rgba(255, 255, 255, 0.8)';
 		var xoff = context.measureText(text).width/2
 		//context.strokeText(text, this.x - xoff, this.y);
-		context.fillText(text, this.x - xoff, this.y);
+		context.fillText(text, canvas.width*this.x - xoff, canvas.height*this.y);
 	}
 }
 
@@ -429,7 +437,7 @@ class Button {
 			context.fill();
 
 			context.fillStyle = 'rgba(5, 5, 5, 1)';
-			context.fillText(this.id, canvas.width*(this.x + this.width/2) - context.measureText(this.id).width/2, canvas.height*this.y + canvas.width/75);
+			context.fillText(this.id, canvas.width*(this.x + this.width/2) - context.measureText(this.id).width/2, canvas.height*this.y + canvas.height/40);
 		}
 		context.closePath();
 
@@ -446,6 +454,14 @@ class Button {
 	}
 }
 
+function start_game() {
+    socket.emit("start");
+}
+
+function submit_microbe() {
+    socket.emit("new_species", Name, Mutation, Metabolism, Flagella, Toxicity, Robustness);
+}
+
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003, 'Mutation'));
 buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Metabolism'));
@@ -453,9 +469,8 @@ buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Tox
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
 buttons.push(new PointIndicator(0.5, 0.71));
-buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function() {}));
+buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function(x, y) {submit_microbe();}));
 buttons.push(new Button('Name', 0.4, 0.2, 0.2, 0.05, 0.003, function() {}));
-
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -519,7 +534,6 @@ document.addEventListener('mouseup', function(event) {
 });
 
 document.addEventListener('mousedown', function(event) {
-    //become_host();
 	for (var i in buttons) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
