@@ -22,6 +22,7 @@ var time_remaining = "5:00"
 var maxStats = 5;
 var statPoints = 12;
 
+var Mutation = 0.5;
 var Metabolism = 1;
 var Toxicity = 1;
 var Robustness = 1;
@@ -246,14 +247,14 @@ class AgentRender {
 }
 
 class Slider {
-	constructor(id, x, y, width, height, size) {
+	constructor(id, x, y, width, height, size, stat) {
 		this.id = id;
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
 		this.size = size;
-		this.value = 0.5;
+		this.stat = stat;
 		this.type = 'slider';
 	}
 
@@ -265,7 +266,7 @@ class Slider {
 		context.strokeStyle = 'rgba(5, 5, 5, 1)';
 		context.lineWidth = 2;
 		context.beginPath();
-		context.arc(this.x*canvas.width + this.value*this.width*canvas.width + canvas.width*this.size/2, this.y*canvas.height + this.height*canvas.height/2, 2*this.size*canvas.width, 0, Math.PI*2);
+		context.arc(this.x*canvas.width + window[this.stat]*this.width*canvas.width + canvas.width*this.size/2, this.y*canvas.height + this.height*canvas.height/2, 2*this.size*canvas.width, 0, Math.PI*2);
 		context.fill();
 		context.stroke();
 		context.closePath();
@@ -390,17 +391,42 @@ class Button {
 	}
 
 	render(canvas, context) {
-		
+		var labelX = 0.075;
+		var labelMargin = canvas.width/350;
+		var r = 10;
+		var blinkerHeight = this.height/2;
+
+		context.fillStyle = 'rgba(255, 255, 255, 1)';
+		context.font = (canvas.width/90).toString() + 'px Arial';
+		context.fillText('Name', this.x + this.width*labelX - r, this.y + canvas.width/360);
+
+		context.strokeStyle = 'rgba(255, 255, 255, 1)';
+		context.lineWidth = 1;
+		context.beginPath();
+		context.moveTo(this.x + r, this.y);
+		context.lineTo(this.x + this.width*labelX - r - labelMargin, this.y);
+		context.moveTo(this.x + this.width*labelX - r + context.measureText('Name').width + labelMargin, this.y);
+		context.lineTo(this.x + this.width - r, this.y);
+		context.quadraticCurveTo(this.x + width, this.y, this.x + this.width, this.y + r);
+		context.lineTo(this.x + this.width, this.y + height - r);
+		context.quadraticCurveTo(this.x + this.width, this.y + this.height, this.x + this.width - r, this.y + this.height);
+		context.lineTo(this.x + r, this.y + this.height);
+		context.quadraticCurveTo(this.x, this.y + this.height, this.x, this.y + this.height - r);
+		context.lineTo(this.x, this.y + r);
+		context.quadraticCurveTo(this.x, this.y, this.x + r, this.y);
+		context.stroke();
+		context.closePath();
 	}
 }
 
 var buttons = [];
-buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
+buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003, 'Mutation'));
 buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Metabolism'));
 buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Toxicity'));
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
 buttons.push(new PointIndicator(0.5, 0.71));
+//buttons.push(new Button('Submit', 0.45, 0.7, 0.1, 0.04, function() {}));
 
 
 function render(canvas, context) {
@@ -468,7 +494,7 @@ document.addEventListener('mousedown', function(event) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
 			if (button.type == 'slider') {
-				button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
+				window[button.stat] = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 				dragging = i;
 			} else if (button.type = 'pointDisplay') {
 				button.onClick(event.clientX, event.clientY);
@@ -481,7 +507,7 @@ document.addEventListener('mousedown', function(event) {
 document.addEventListener('mousemove', function(event) {
 	if (dragging != -1) {
 		var button = buttons[dragging];
-		button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
+		window[button.stat] = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 	}
 });
 
