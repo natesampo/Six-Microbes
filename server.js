@@ -19,7 +19,7 @@ var host = '';
 
 var sim_width = 1;
 var sim_height = 1;
-var sim_speed = 1.0;
+var sim_speed = 0.6;
 var started = true;
 
 var spawn_positions = [[0.2, 0.2],
@@ -153,7 +153,10 @@ class Agent{
         this.species = species;
         this.rand_max = 50;
         this.collision_radius = 0.01;
-        this.speed = sim_speed * (0.005 + 0.01 * this.species.flagella) * (Math.random() * 0.9 + 0.1);
+
+        var base_speed = 0.0015 + this.species.flagella * 0.010;
+        var variant_speed = 0.0005 + this.species.flagella * 0.005;
+        this.speed = sim_speed * (base_speed + Math.random() * variant_speed);
         this.direction = this.random_direction();
         this.fitness = this.random_value(this.rand_max);
         this.position = position.slice();
