@@ -198,7 +198,7 @@ class Agent{
     }
 
     maybe_inherit_fitness(parent) {
-        if (Math.random() > this.mutation_rate) {
+        if (Math.random() > this.species.mutation_rate) {
             this.fitness = parent.fitness;
         }
     }
