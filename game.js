@@ -7,12 +7,20 @@ var pxRatio = window.devicePixelRatio || window.screen.availWidth/document.docum
 var dragging = -1;
 var to_render = [];
 var colors = [[220, 30, 40],
-              [30, 120, 240],
-              [50, 200, 90],
-              [240, 130, 30],
-              [160, 50, 200],
-              [50, 160, 200],
-              [125, 125, 125]].reverse();
+              [85, 94, 219],
+              [189, 189, 52],
+              [114, 189, 196],
+              [255, 146, 68],
+              [82, 206, 111],
+              [219, 37, 167],
+              [158, 158, 158],
+              [89, 165, 219],
+              [165, 124, 79],
+              [160, 59, 219]];
+for (var i = 0; i < 20; i++) {
+    colors.push([229, 229, 299]);
+}
+colors = colors.reverse();
 var id_to_color = {};
 var id_to_count = {};
 var id_to_stats = {};
