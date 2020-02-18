@@ -22,10 +22,10 @@ var time_remaining = "5:00"
 var maxStats = 5;
 var statPoints = 10;
 
-var metabolism = 4;
-var toxicity = 1;
-var robustness = 1;
-var flagella = 1;
+var Metabolism = 1;
+var Toxicity = 1;
+var Robustness = 1;
+var Flagella = 1;
 
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
@@ -287,12 +287,25 @@ class PointDisplay {
 	}
 
 	render(canvas, context) {
-		context.fillStyle = 'rgba(230, 230, 230, 1)';
+		if (window[this.stat] == maxStats) {
+			context.fillStyle = 'rgba(130, 130, 130, 1)';
+		} else {
+			context.fillStyle = 'rgba(230, 230, 230, 1)';
+		}
 		context.strokeStyle = 'rgba(5, 5, 5, 1)';
 		context.lineWidth = 2;
 		context.beginPath();
 		context.rect(canvas.width*this.x, canvas.height*this.y, canvas.width*this.width, canvas.height*(this.height/2 - 0.0025));
-		context.moveTo(canvas.width*this.x, canvas.height*(this.y + this.height/2 + 0.0025));
+		context.fill();
+		context.stroke();
+		context.closePath();
+
+		if (window[this.stat] == 1) {
+			context.fillStyle = 'rgba(130, 130, 130, 1)';
+		} else {
+			context.fillStyle = 'rgba(230, 230, 230, 1)';
+		}
+		context.beginPath();
 		context.rect(canvas.width*this.x, canvas.height*(this.y + this.height/2 + 0.0025), canvas.width*this.width, canvas.height*(this.height/2 - 0.0025));
 		context.fill();
 		context.stroke();
@@ -320,6 +333,10 @@ class PointDisplay {
 			context.stroke();
 			context.closePath();
 		}
+
+		context.font = (canvas.width/90).toString() + 'px Arial';
+		context.strokeText(this.id, canvas.width*(this.x - 0.005) - context.measureText(this.stat).width, canvas.height*this.y + canvas.width/77);
+		context.fillText(this.id, canvas.width*(this.x - 0.005) - context.measureText(this.stat).width, canvas.height*this.y + canvas.width/77);
 	}
 
 	onClick(x, y) {
@@ -333,7 +350,10 @@ class PointDisplay {
 
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
-buttons.push(new PointDisplay('Metabolism', 0.45, 0.45, 0.015, 0.04, 0.004, 'metabolism'));
+buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Metabolism'));
+buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Toxicity'));
+buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
+buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
 
 
 function render(canvas, context) {
@@ -392,7 +412,7 @@ document.addEventListener('mouseup', function(event) {
 });
 
 document.addEventListener('mousedown', function(event) {
-    become_host();
+    //become_host();
 	for (var i in buttons) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {
