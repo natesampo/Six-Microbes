@@ -446,8 +446,11 @@ document.addEventListener('mouseup', function(event) {
 	dragging = -1;
 });
 
+function start_game() {
+    socket.emit("start");
+}
+
 document.addEventListener('mousedown', function(event) {
-    //become_host();
 	for (var i in buttons) {
 		var button = buttons[i];
 		if (event.clientX + window.scrollX >= button.x*window.innerWidth - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientX + window.scrollX <= button.x*canvas.width + button.width*canvas.width + ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY >= button.y*canvas.height - ((button.type == 'slider') ? 2*button.size*canvas.width : 0) && event.clientY + window.scrollY <= button.y*canvas.height + button.height*canvas.height + ((button.type == 'slider') ? 2*button.size*canvas.width : 0)) {

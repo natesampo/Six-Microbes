@@ -20,7 +20,7 @@ var host = '';
 var sim_width = 1;
 var sim_height = 1;
 var sim_speed = 0.6;
-var started = true;
+var started = false;
 
 var spawn_positions = [[0.2, 0.2],
                        [0.8, 0.8],
@@ -340,6 +340,11 @@ server.listen(process.env.PORT || port, function() {
 });
 
 
+function start_simulation() {
+    started = true;
+}
+
+
 io.on('connection', function(socket) {
     client_ids.push(socket.id);
 	console.log('New Connection');
@@ -364,6 +369,13 @@ io.on('connection', function(socket) {
 		} catch (e) {
 			console.log(e);
 		}
+   	});
+   	socket.on('start', function() {
+   	    try {
+   	        start_simulation();
+   	    } catch (e) {
+   	        console.log(e);
+   	    }
    	});
 });
 
@@ -407,10 +419,6 @@ function packet() {
         p += species[i].to_string();
     }
     return p;
-}
-
-function start_simulation() {
-    var started = true;
 }
 
 setInterval(function() {
