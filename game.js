@@ -22,11 +22,16 @@ var time_remaining = "5:00"
 var maxStats = 5;
 var statPoints = 12;
 
+var Name = '';
 var Mutation = 0.5;
 var Metabolism = 1;
 var Toxicity = 1;
 var Robustness = 1;
 var Flagella = 1;
+
+var blinking = 0;
+var maxNameLength = 16;
+var shift = false;
 
 var cache = [];
 
@@ -272,7 +277,7 @@ class Slider {
 		context.closePath();
 
 		context.font = (canvas.width/90).toString() + 'px Arial';
-		context.strokeText(this.id, this.x*canvas.width + this.width*canvas.width/2 - context.measureText(this.id).width/2, this.y*canvas.height + this.size*canvas.height*12.2);
+		//context.strokeText(this.id, this.x*canvas.width + this.width*canvas.width/2 - context.measureText(this.id).width/2, this.y*canvas.height + this.size*canvas.height*12.2);
 		context.fillText(this.id, this.x*canvas.width + this.width*canvas.width/2 - context.measureText(this.id).width/2, this.y*canvas.height + this.size*canvas.height*12.2);
 	}
 }
@@ -294,7 +299,7 @@ class PointIndicator {
 		context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
 		context.fillStyle = 'rgba(255, 255, 255, 0.8)';
 		var xoff = context.measureText(text).width/2
-		context.strokeText(text, this.x - xoff, this.y);
+		//context.strokeText(text, this.x - xoff, this.y);
 		context.fillText(text, this.x - xoff, this.y);
 	}
 }
@@ -364,7 +369,7 @@ class PointDisplay {
 		}
 
 		context.font = (canvas.width/90).toString() + 'px Arial';
-		context.strokeText(this.id, canvas.width*(this.x - 0.005) - context.measureText(this.stat).width, canvas.height*this.y + canvas.width/77);
+		//context.strokeText(this.id, canvas.width*(this.x - 0.005) - context.measureText(this.stat).width, canvas.height*this.y + canvas.width/77);
 		context.fillText(this.id, canvas.width*(this.x - 0.005) - context.measureText(this.stat).width, canvas.height*this.y + canvas.width/77);
 	}
 
@@ -380,42 +385,64 @@ class PointDisplay {
 }
 
 class Button {
-	constructor(id, x, y, width, height, onClick) {
+	constructor(id, x, y, width, height, r, onClick) {
 		this.id = id;
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
+		this.r = r;
 		this.onClick = onClick;
 		this.type = 'button';
 	}
 
 	render(canvas, context) {
 		var labelX = 0.075;
-		var labelMargin = canvas.width/350;
-		var r = 10;
-		var blinkerHeight = this.height/2;
+		var labelMargin = 0.003;
+		var blinkerHeight = 0.5*this.height;
 
 		context.fillStyle = 'rgba(255, 255, 255, 1)';
 		context.font = (canvas.width/90).toString() + 'px Arial';
-		context.fillText('Name', this.x + this.width*labelX - r, this.y + canvas.width/360);
 
-		context.strokeStyle = 'rgba(255, 255, 255, 1)';
-		context.lineWidth = 1;
+		context.strokeStyle = 'rgba(5, 5, 5, 1)';
+		context.lineWidth = 4;
 		context.beginPath();
-		context.moveTo(this.x + r, this.y);
-		context.lineTo(this.x + this.width*labelX - r - labelMargin, this.y);
-		context.moveTo(this.x + this.width*labelX - r + context.measureText('Name').width + labelMargin, this.y);
-		context.lineTo(this.x + this.width - r, this.y);
-		context.quadraticCurveTo(this.x + width, this.y, this.x + this.width, this.y + r);
-		context.lineTo(this.x + this.width, this.y + height - r);
-		context.quadraticCurveTo(this.x + this.width, this.y + this.height, this.x + this.width - r, this.y + this.height);
-		context.lineTo(this.x + r, this.y + this.height);
-		context.quadraticCurveTo(this.x, this.y + this.height, this.x, this.y + this.height - r);
-		context.lineTo(this.x, this.y + r);
-		context.quadraticCurveTo(this.x, this.y, this.x + r, this.y);
+		context.moveTo(canvas.width*(this.x + this.r), canvas.height*this.y);
+		if (this.id == 'Name') {
+			context.lineWidth = 2;
+			context.lineTo(canvas.width*(this.x + this.width*labelX - this.r - labelMargin), canvas.height*this.y);
+			context.moveTo(canvas.width*(this.x + this.width*labelX - this.r + context.measureText('Name').width/canvas.width + labelMargin), canvas.height*this.y);
+			//context.strokeText('Name', canvas.width*(this.x + this.width*labelX - this.r), canvas.height*(this.y + 1/250));
+			context.fillText('Name', canvas.width*(this.x + this.width*labelX - this.r), canvas.height*(this.y + 1/250));
+			context.strokeStyle = 'rgba(255, 255, 255, 1)';
+		}
+		context.lineTo(canvas.width*(this.x + this.width - this.r), canvas.height*this.y);
+		context.quadraticCurveTo(canvas.width*(this.x + this.width), canvas.height*this.y, canvas.width*(this.x + this.width), canvas.height*(this.y + this.r));
+		context.lineTo(canvas.width*(this.x + this.width), canvas.height*(this.y + this.height - this.r));
+		context.quadraticCurveTo(canvas.width*(this.x + this.width), canvas.height*(this.y + this.height), canvas.width*(this.x + this.width - this.r), canvas.height*(this.y + this.height));
+		context.lineTo(canvas.width*(this.x + this.r), canvas.height*(this.y + this.height));
+		context.quadraticCurveTo(canvas.width*this.x, canvas.height*(this.y + this.height), canvas.width*this.x, canvas.height*(this.y + this.height - this.r));
+		context.lineTo(canvas.width*this.x, canvas.height*(this.y + this.r));
+		context.quadraticCurveTo(canvas.width*this.x, canvas.height*this.y, canvas.width*(this.x + this.r), canvas.height*this.y);
 		context.stroke();
+		if (this.id != 'Name') {
+			context.fill();
+
+			context.fillStyle = 'rgba(5, 5, 5, 1)';
+			context.fillText(this.id, canvas.width*(this.x + this.width/2) - context.measureText(this.id).width/2, canvas.height*this.y + canvas.width/75);
+		}
 		context.closePath();
+
+		if (this.id == 'Name') {
+			context.lineWidth = 2;
+			//context.strokeStyle = 'rgba(5, 5, 5, 1)';
+			//context.strokeText(Name, canvas.width*this.x + canvas.width/250, canvas.height*this.y + canvas.height/30);
+			context.fillText(Name, canvas.width*this.x + canvas.width/190, canvas.height*this.y + canvas.height/30);
+
+			if (blinking < ticks/2) {
+				context.fillRect(canvas.width*(this.x + this.r + 6/canvas.width) + context.measureText(Name).width, canvas.height*(this.y + (this.height - blinkerHeight)/2), 2, canvas.height*blinkerHeight);
+			}
+		}
 	}
 }
 
@@ -426,7 +453,8 @@ buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Tox
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
 buttons.push(new PointIndicator(0.5, 0.71));
-//buttons.push(new Button('Submit', 0.45, 0.7, 0.1, 0.04, function() {}));
+buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function() {}));
+buttons.push(new Button('Name', 0.4, 0.2, 0.2, 0.05, 0.003, function() {}));
 
 
 function render(canvas, context) {
@@ -481,6 +509,8 @@ setInterval(function() {
 	context = canvas.getContext('2d');
 	context.imageSmoothingEnabled = false;
 
+	blinking = (blinking+0.6)%ticks;
+
 	render(canvas, context);
 }, 1000/ticks);
 
@@ -520,3 +550,223 @@ window.addEventListener('resize', function(event) {
 		pxRatio = newPxRatio;
 	}
 });
+
+document.addEventListener('keydown', function(event) {
+	if (Name.length < maxNameLength) {
+		Name = Name + keycode(event.keyCode, shift);
+	}
+
+	switch (event.keyCode) {
+		case 8: // Backspace
+			if (Name.length > 0) {
+				Name = Name.slice(0, -1);
+			}
+			break;
+		case 16: // Shift
+			shift = true;
+			break;
+	}
+});
+
+document.addEventListener('keyup', function(event) {
+	switch (event.keyCode) {
+		case 16: // Shift
+			shift = false;
+			break;
+	}
+});
+
+function keycode(keycode, shift) {
+  switch (keycode) {
+    case 32: // Space
+      return ' ';
+    case 48:
+      return ((shift) ? ')' : '0');
+      break;
+    case 49:
+      return ((shift) ? '!' : '1');
+      break;
+    case 50:
+      return ((shift) ? '@' : '2');
+      break;
+    case 51:
+      return ((shift) ? '#' : '3');
+      break;
+    case 52:
+      return ((shift) ? '$' : '4');
+      break;
+    case 53:
+      return ((shift) ? '%' : '5');
+      break;
+    case 54:
+      return ((shift) ? '^' : '6');
+      break;
+    case 55:
+      return ((shift) ? '&' : '7');
+      break;
+    case 56:
+      return ((shift) ? '*' : '8');
+      break;
+    case 57:
+      return ((shift) ? '(' : '9');
+      break;
+    case 65: // A
+      return ((shift) ? 'A' : 'a');
+      break;
+    case 66:
+      return ((shift) ? 'B' : 'b');
+      break;
+    case 67:
+      return ((shift) ? 'C' : 'c');
+      break;
+    case 68:
+      return ((shift) ? 'D' : 'd');
+      break;
+    case 69:
+      return ((shift) ? 'E' : 'e');
+      break;
+    case 70:
+      return ((shift) ? 'F' : 'f');
+      break;
+    case 71:
+      return ((shift) ? 'G' : 'g');
+      break;
+    case 72:
+      return ((shift) ? 'H' : 'h');
+      break;
+    case 73:
+      return ((shift) ? 'I' : 'i');
+      break;
+    case 74:
+      return ((shift) ? 'J' : 'j');
+      break;
+    case 75:
+      return ((shift) ? 'K' : 'k');
+      break;
+    case 76:
+      return ((shift) ? 'L' : 'l');
+      break;
+    case 77:
+      return ((shift) ? 'M' : 'm');
+      break;
+    case 78:
+      return ((shift) ? 'N' : 'n');
+      break;
+    case 79:
+      return ((shift) ? 'O' : 'o');
+      break;
+    case 80:
+      return ((shift) ? 'P' : 'p');
+      break;
+    case 81:
+      return ((shift) ? 'Q' : 'q');
+      break;
+    case 82:
+      return ((shift) ? 'R' : 'r');
+      break;
+    case 83:
+      return ((shift) ? 'S' : 's');
+      break;
+    case 84:
+      return ((shift) ? 'T' : 't');
+      break;
+    case 85:
+      return ((shift) ? 'U' : 'u');
+      break;
+    case 86:
+      return ((shift) ? 'V' : 'v');
+      break;
+    case 87:
+      return ((shift) ? 'W' : 'w');
+      break;
+    case 88:
+      return ((shift) ? 'X' : 'x');
+      break;
+    case 89:
+      return ((shift) ? 'Y' : 'y');
+      break;
+    case 90:
+      return ((shift) ? 'Z' : 'z');
+      break;
+    case 186:
+      return ((shift) ? ':' : ';');
+      break;
+    case 187:
+      return ((shift) ? '+' : '=');
+      break;
+    case 188:
+      return ((shift) ? '<' : ',');
+      break;
+    case 189:
+      return ((shift) ? '_' : '-');
+      break;
+    case 190:
+      return ((shift) ? '>' : '.');
+      break;
+    case 191:
+      return ((shift) ? '?' : '/');
+      break;
+    case 192:
+      return ((shift) ? '~' : '`');
+      break;
+    case 219:
+      return ((shift) ? '{' : '[');
+      break;
+    case 220:
+      return ((shift) ? '|' : '\\');
+      break;
+    case 221:
+      return ((shift) ? '}' : ']');
+      break;
+    case 222:
+      return ((shift) ? '"' : "'");
+      break;
+    case 96: // NUMPAD begins here
+      return '0';
+      break;
+    case 97:
+      return '1';
+      break;
+    case 98:
+      return '2';
+      break;
+    case 99:
+      return '3';
+      break;
+    case 100:
+      return '4';
+      break;
+    case 101:
+      return '5';
+      break;
+    case 102:
+      return '6';
+      break;
+    case 103:
+      return '7';
+      break;
+    case 104:
+      return '8';
+      break;
+    case 105:
+      return '9';
+      break;
+    case 106:
+      return '*';
+      break;
+    case 107:
+      return '+';
+      break;
+    case 109:
+      return '-';
+      break;
+    case 110:
+      return '.';
+      break;
+    case 111:
+      return '/';
+      break;
+    default:
+      return '';
+  }
+}
