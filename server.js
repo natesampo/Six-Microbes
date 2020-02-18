@@ -214,7 +214,7 @@ class Agent{
     reproduce() {
         // Reproduce as many times as possible while keeping energy above a threshold
         if (this.mutant) { return; }
-        while (this.energy >= 2) {
+        while (this.energy >= 2) { 
             this.energy -= 1;
             this.species.spawn(1, this.position.slice(), this);
         }
