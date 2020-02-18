@@ -450,17 +450,9 @@ var g = new Species("R. martellium", 0.5, Math.random() + 0.2, Math.random() + 0
 species.push(a);
 species.push(b);
 species.push(c);
-species.push(d);
-species.push(e);
-species.push(f);
-species.push(g);
 a.populate_no_mutation(30, spawn_positions.pop());
 b.populate_no_mutation(30, spawn_positions.pop());
 c.populate_no_mutation(30, spawn_positions.pop());
-d.populate_no_mutation(30, spawn_positions.pop());
-e.populate_no_mutation(30, spawn_positions.pop());
-f.populate_no_mutation(30, spawn_positions.pop());
-g.populate_no_mutation(30, spawn_positions.pop());
 
 function packet() {
     var p = "";

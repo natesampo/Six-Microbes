@@ -298,8 +298,8 @@ class PointIndicator {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
-		this.width = 1;
-		this.height = 1;
+		this.width = 0;
+		this.height = 0;
 		this.type = "pointIndicator";
 	}
 
@@ -463,7 +463,7 @@ function start_game() {
 }
 
 function submit_microbe() {
-    socket.emit("new_species", Name, Mutation, Metabolism, Flagella, Toxicity, Robustness);
+    socket.emit("new_species", Name, Mutation, Metabolism/5, Flagella/5, Toxicity/5, Robustness/5);
 }
 
 var buttons = [];
@@ -472,9 +472,9 @@ buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Me
 buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Toxicity'));
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
-buttons.push(new PointIndicator(0.5, 0.71));
 buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function(x, y) {submit_microbe();}));
-buttons.push(new Button('Name', 0.4, 0.2, 0.2, 0.05, 0.003, function() {}));
+buttons.push(new Button('Name', 0.4, 0.2, 0.2, 0.05, 0.003, function(x, y) {}));
+buttons.push(new PointIndicator(0.5, 0.71));
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -544,8 +544,8 @@ document.addEventListener('mousedown', function(event) {
 			if (button.type == 'slider') {
 				window[button.stat] = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 				dragging = i;
-			} else if (button.type = 'pointDisplay') {
-				button.onClick(event.clientX, event.clientY);
+			} else {
+				button.onClick(event.clientX + window.scrollX, event.clientY + window.scrollY);
 			}
 			break;
 		}
