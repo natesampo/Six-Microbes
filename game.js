@@ -22,6 +22,8 @@ var time_remaining = "5:00"
 var maxStats = 5;
 var statPoints = 12;
 
+var Name = "";
+var Mutation;
 var Metabolism = 1;
 var Toxicity = 1;
 var Robustness = 1;
@@ -394,6 +396,14 @@ class Button {
 	}
 }
 
+function start_game() {
+    socket.emit("start");
+}
+
+function submit_microbe() {
+    socket.emit("new_species", Name, Mutation, Metabolism, Flagella, Toxicity, Robustness);
+}
+
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
 buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Metabolism'));
@@ -401,6 +411,7 @@ buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Tox
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
 buttons.push(new PointIndicator(0.5, 0.71));
+buttons.push(new Button("Submit", 0.5, 0.8, 0.1, 0.01, function(x, y) { submit_microbe(); }));
 
 
 function render(canvas, context) {
@@ -461,10 +472,6 @@ setInterval(function() {
 document.addEventListener('mouseup', function(event) {
 	dragging = -1;
 });
-
-function start_game() {
-    socket.emit("start");
-}
 
 document.addEventListener('mousedown', function(event) {
 	for (var i in buttons) {
