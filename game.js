@@ -20,7 +20,7 @@ var id_to_immunity = {};
 var species_cards = [];
 var time_remaining = "5:00"
 var maxStats = 5;
-var statPoints = 10;
+var statPoints = 12;
 
 var Metabolism = 1;
 var Toxicity = 1;
@@ -291,7 +291,7 @@ class PointDisplay {
 	}
 
 	render(canvas, context) {
-		if (window[this.stat] == maxStats) {
+		if (window[this.stat] == maxStats || Metabolism + Toxicity + Robustness + Flagella >= statPoints) {
 			context.fillStyle = 'rgba(130, 130, 130, 1)';
 		} else {
 			context.fillStyle = 'rgba(230, 230, 230, 1)';
@@ -345,7 +345,9 @@ class PointDisplay {
 
 	onClick(x, y) {
 		if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*this.y && y <= canvas.height*(this.y + this.height/2 - 0.0025)) {
-			window[this.stat] = Math.min(window[this.stat]+1, maxStats);
+			if (Metabolism + Toxicity + Robustness + Flagella < statPoints) {
+				window[this.stat] = Math.min(window[this.stat]+1, maxStats);
+			}
 		} else if (x >= canvas.width*this.x && x <= canvas.width*(this.x + this.width) && y >= canvas.height*(this.y + this.height/2 + 0.0025) && y <= canvas.height*(this.y + this.height/2 + 0.0025 + this.height/2 - 0.0025)) {
 			window[this.stat] = Math.max(window[this.stat]-1, 1);
 		}
