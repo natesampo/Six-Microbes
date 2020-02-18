@@ -597,9 +597,9 @@ document.addEventListener('keydown', function(event) {
 		case 8: // Backspace
 			if (Name.length > 0) {
 				Name = Name.slice(0, -1);
-				event.stopPropagation();
-				event.returnValue = false;
 			}
+			event.stopPropagation();
+			event.returnValue = false;
 			break;
 		case 16: // Shift
 			shift = true;
