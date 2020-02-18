@@ -41,6 +41,8 @@ var blinking = 0;
 var maxNameLength = 16;
 var shift = false;
 
+var done = false;
+
 var cache = [];
 
 var canvas = document.getElementById('canvas');
@@ -480,29 +482,37 @@ buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Me
 buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Toxicity'));
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
-buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function(x, y) {submit_microbe();}));
+buttons.push(new Button('Submit', 0.45, 0.75, 0.1, 0.04, 0.003, function(x, y) {submit_microbe(); done = true;}));
 buttons.push(new Button('Name', 0.4, 0.2, 0.2, 0.05, 0.003, function(x, y) {}));
 buttons.push(new PointIndicator(0.5, 0.71));
 
 function render(canvas, context) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (host) {
-        context.fillStyle = 'rgba(40, 40, 40, 1)';
-	    context.fillRect(0, 0, canvas.width, canvas.height);
-        species_cards.sort(function(a, b) {
-           return id_to_count[b.id] - id_to_count[a.id];
-        });
-    	for (var i in to_render) {
-	        to_render[i].render(canvas, context);
+	if (done) {
+		context.fillStyle = 'rgba(80, 80, 80, 1)';
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		context.fillStyle = 'rgba(255, 255, 255, 1)';
+		context.font = (canvas.width/20).toString() + 'px Arial';
+		context.fillText('THank', canvas.width/2 - context.measureText('THank').width/2, canvas.height/2);
+	} else {
+	    if (host) {
+	        context.fillStyle = 'rgba(40, 40, 40, 1)';
+		    context.fillRect(0, 0, canvas.width, canvas.height);
+	        species_cards.sort(function(a, b) {
+	           return id_to_count[b.id] - id_to_count[a.id];
+	        });
+	    	for (var i in to_render) {
+		        to_render[i].render(canvas, context);
+		    }
+	    } else {
+	    	context.fillStyle = 'rgba(80, 80, 80, 1)';
+		    context.fillRect(0, 0, canvas.width, canvas.height);
+	    	for (var i in buttons) {
+			    buttons[i].render(canvas, context);
+	        }
 	    }
-    } else {
-    	context.fillStyle = 'rgba(80, 80, 80, 1)';
-	    context.fillRect(0, 0, canvas.width, canvas.height);
-    	for (var i in buttons) {
-		    buttons[i].render(canvas, context);
-        }
-    }
+	}
 }
 
 socket.on("cache", function(packet) {
