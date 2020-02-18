@@ -216,7 +216,7 @@ class Agent{
         if (this.mutant) { return; }
         while (this.energy >= 2) {
             this.energy -= 1;
-            this.species.populate(1, this.position.slice());
+            this.species.spawn(1, this.position.slice(), this);
         }
     }
 
