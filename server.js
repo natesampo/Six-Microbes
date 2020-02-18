@@ -405,6 +405,13 @@ io.on('connection', function(socket) {
                 var new_species = new Species(id, mutation_rate, metabolism, flagella, toxicity, robustness);
                 species.push(new_species);
                 new_species.populate_no_mutation(30, spawn_positions.pop());
+
+				var packet = [];
+				for (var i in species) {
+					packet.push(species[i].id);
+				}
+
+				io.to(host).emit("cache", packet);
             }
 		} catch (e) {
 			console.log(e);

@@ -504,7 +504,7 @@ function render(canvas, context) {
 			context.fillRect(0, 0, canvas.width, canvas.height);
 			context.fillStyle = 'rgba(255, 255, 255, 1)';
 			context.font = (canvas.width/20).toString() + 'px Arial';
-			context.fillText('THank', canvas.width/2 - context.measureText('THank').width/2, canvas.height/2);
+			context.fillText('Thank', canvas.width/2 - context.measureText('THank').width/2, canvas.height/2);
     	} else {
 	    	context.fillStyle = 'rgba(80, 80, 80, 1)';
 		    context.fillRect(0, 0, canvas.width, canvas.height);
@@ -516,6 +516,7 @@ function render(canvas, context) {
 }
 
 socket.on("cache", function(packet) {
+	console.log(packet);
 	cache = packet;
 })
 
