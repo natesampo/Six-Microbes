@@ -378,6 +378,25 @@ class PointDisplay {
 	}
 }
 
+class Button {
+	constructor(id, x, y, width, height) {
+		this.id = id;
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+		this.type = 'button';
+	}
+
+	render(canvas, context) {
+
+	}
+
+	onClick(x, y) {
+
+	}
+}
+
 var buttons = [];
 buttons.push(new Slider('Mutation Rate', 0.45, 0.35, 0.1, 0.004, 0.003));
 buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Metabolism'));
