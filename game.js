@@ -379,21 +379,18 @@ class PointDisplay {
 }
 
 class Button {
-	constructor(id, x, y, width, height) {
+	constructor(id, x, y, width, height, onClick) {
 		this.id = id;
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
+		this.onClick = onClick;
 		this.type = 'button';
 	}
 
 	render(canvas, context) {
-
-	}
-
-	onClick(x, y) {
-
+		
 	}
 }
 
