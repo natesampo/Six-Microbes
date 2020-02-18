@@ -259,7 +259,7 @@ class Agent{
         if (this.mutant) { return; }
         for (var i in sugar.sugar) {
             if (this.is_colliding(sugar.sugar[i])) {
-                this.energy += sugar.sugar[i].energy * this.species.metabolism;
+                this.energy += sugar.sugar[i].energy * 2*this.species.metabolism;
                 sugar.sugar[i].energy = 0;
                 sugar.sugar[i].alive = 0;
             }
@@ -291,7 +291,7 @@ class Agent{
 
     die() {
         this.alive = false;
-        sugar.add(this.position.slice(), this.energy/this.species.metabolism);
+        sugar.add(this.position.slice(), this.energy/(2*this.species.metabolism));
     }
 
     update_target() {
@@ -405,6 +405,13 @@ io.on('connection', function(socket) {
                 var new_species = new Species(id, mutation_rate, metabolism, flagella, toxicity, robustness);
                 species.push(new_species);
                 new_species.populate_no_mutation(30, spawn_positions.pop());
+
+				var packet = [];
+				for (var i in species) {
+					packet.push(species[i].id);
+				}
+
+				io.to(host).emit("cache", packet);
             }
 		} catch (e) {
 			console.log(e);
@@ -441,28 +448,6 @@ function time_string() {
     var minutes = Math.floor(remaining/60);
     return ("T," + minutes + ":" + seconds + ";");
 }
-
-//var a = new Species("Mip", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var b = new Species("Newp", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var c = new Species("Literally E. coli", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var d = new Species("Nathius sampolium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var e = new Species("Paul nadanius", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var f = new Species("Jeremus cryanus", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//var g = new Species("R. martellium", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
-//species.push(a);
-//species.push(b);
-//species.push(c);
-//species.push(d);
-//species.push(e);
-//species.push(f);
-//species.push(g);
-//a.populate_no_mutation(30, spawn_positions.pop());
-//b.populate_no_mutation(30, spawn_positions.pop());
-//c.populate_no_mutation(30, spawn_positions.pop());
-//d.populate_no_mutation(30, spawn_positions.pop());
-//e.populate_no_mutation(30, spawn_positions.pop());
-//f.populate_no_mutation(30, spawn_positions.pop());
-//g.populate_no_mutation(30, spawn_positions.pop());
 
 function packet() {
     var p = "";
