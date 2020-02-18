@@ -473,7 +473,7 @@ function start_game() {
 }
 
 function submit_microbe() {
-    socket.emit("new_species", Name, Mutation, Metabolism/5, Flagella/5, Toxicity/5, Robustness/5);
+    socket.emit("new_species", Name, Mutation*0.8 + 0.1, Metabolism/5, Flagella/5, Toxicity/5, Robustness/5);
 }
 
 var buttons = [];
