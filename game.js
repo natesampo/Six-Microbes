@@ -27,6 +27,8 @@ var Toxicity = 1;
 var Robustness = 1;
 var Flagella = 1;
 
+var cache = [];
+
 var canvas = document.getElementById('canvas');
 canvas.style.position = 'absolute';
 canvas.style.top = 0;
@@ -182,7 +184,7 @@ class AgentRender {
 	constructor(agent_string) {
 	    var split = agent_string.split(",");
 
-	    this.id = split[0];
+	    this.id = cache[split[0]];
 	    if (!(this.id in id_to_count)) {
 	        id_to_count[this.id] = 1;
 	    } else {
@@ -379,6 +381,10 @@ function render(canvas, context) {
     }
 }
 
+socket.on("cache", function(packet) {
+	cache = packet;
+})
+
 socket.on("update", function(packet) {
     to_render = species_cards.slice();
     to_render.push(new TimeBoard());
@@ -390,7 +396,7 @@ socket.on("update", function(packet) {
             var info = pieces[i].split(",");
             if (info[0] == "S") {
                 to_render.push(new SugarRender(pieces[i]));
-            } else if (info[0] == "Time") {
+            } else if (info[0] == "T") {
                 time_remaining = info[1];
             } else if (info[0].length > 0) {
                 to_render.push(new AgentRender(pieces[i]));

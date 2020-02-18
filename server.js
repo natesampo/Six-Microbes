@@ -292,7 +292,16 @@ class Agent{
         if (this.is_immune()) {
             immune = 1;
         }
-        var result = this.species.id + "," + x + "," + y + "," + immune + "," + this.stat_string() + ";";
+
+        var tempID = -1;
+        for (var i in species) {
+        	if (species[i].id == this.species.id) {
+        		tempID = i;
+        		break;
+        	}
+        }
+
+        var result = tempID + "," + x + "," + y + "," + immune + "," + this.stat_string() + ";";
         return result;
     }
 
@@ -345,6 +354,12 @@ io.on('connection', function(socket) {
    	});
    	socket.on('become_host', function() {
 		try {
+			var packet = [];
+			for (var i in species) {
+				packet.push(species[i].id);
+			}
+
+			io.to(socket.id).emit("cache", packet);
 			host = socket.id;
 		} catch (e) {
 			console.log(e);
@@ -359,7 +374,7 @@ function time_string() {
         seconds = "0" + seconds;
     }
     var minutes = Math.floor(remaining/60);
-    return ("Time," + minutes + ":" + seconds + ";");
+    return ("T," + minutes + ":" + seconds + ";");
 }
 
 var a = new Species("Mip", 0.5, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2);
