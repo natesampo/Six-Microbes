@@ -35,7 +35,7 @@ canvas.width = window.innerWidth*pxRatio;
 canvas.height = window.innerHeight*pxRatio;
 
 function points_remaining() {
-    return (statsPoints - Metabolism - Toxicity - Robustness - Flagella);
+    return (statPoints - Metabolism - Toxicity - Robustness - Flagella);
 }
 
 function x_to_draw(x) {
@@ -274,6 +274,28 @@ class Slider {
 	}
 }
 
+class PointIndicator {
+	constructor(x, y) {
+		this.x = x * canvas.width;
+		this.y = y * canvas.height;
+		this.width = 1;
+		this.height = 1;
+		this.type = "pointIndicator";
+	}
+
+	onClick(x, y) {}
+
+	render(canvas, context) {
+	    var text = "Points remaining: " + points_remaining();
+		context.font = (canvas.width/100).toString() + 'px Arial';
+		context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+		context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+		var xoff = context.measureText(text).width/2
+		context.strokeText(text, this.x - xoff, this.y);
+		context.fillText(text, this.x - xoff, this.y);
+	}
+}
+
 class PointDisplay {
 	constructor(id, x, y, segmentWidth, segmentHeight, segmentGap, stat) {
 		this.id = id;
@@ -360,6 +382,7 @@ buttons.push(new PointDisplay('Metabolism', 0.458, 0.45, 0.015, 0.04, 0.004, 'Me
 buttons.push(new PointDisplay('Toxicity', 0.458, 0.505, 0.015, 0.04, 0.004, 'Toxicity'));
 buttons.push(new PointDisplay('Robustness', 0.458, 0.56, 0.015, 0.04, 0.004, 'Robustness'));
 buttons.push(new PointDisplay('Flagella', 0.458, 0.615, 0.015, 0.04, 0.004, 'Flagella'));
+buttons.push(new PointIndicator(0.5, 0.71));
 
 
 function render(canvas, context) {
@@ -425,10 +448,9 @@ document.addEventListener('mousedown', function(event) {
 			if (button.type == 'slider') {
 				button.value = Math.min(Math.max((event.clientX + window.scrollX - button.x*canvas.width)/(button.width*canvas.width), 0), 1);
 				dragging = i;
-			} else {
+			} else if (button.type = 'pointDisplay') {
 				button.onClick(event.clientX, event.clientY);
 			}
-
 			break;
 		}
 	}
