@@ -259,7 +259,7 @@ class Agent{
         if (this.mutant) { return; }
         for (var i in sugar.sugar) {
             if (this.is_colliding(sugar.sugar[i])) {
-                this.energy += sugar.sugar[i].energy * this.species.metabolism;
+                this.energy += sugar.sugar[i].energy * 2*this.species.metabolism;
                 sugar.sugar[i].energy = 0;
                 sugar.sugar[i].alive = 0;
             }
